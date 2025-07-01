@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Graph Explorer</title>
+  {% load static %}
+  <script type="text/javascript" src="{% static 'd3.v7.min.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'style.css' %}" />
+</head>
+
+<body>
+  <h1>Graph Explorer</h1>
+
+  <main>
+    {{ graph_html|safe }}
+  </main>
+</body>
+
+</html>
