@@ -2,7 +2,7 @@ from django.apps import apps
 from django.http import JsonResponse
 from django.shortcuts import render
 
-from core.graph_context import GraphContext
+from core.use_cases.graph_context import GraphContext
 
 
 def index(request):
