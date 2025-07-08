@@ -55,4 +55,16 @@ class Edge:
         :return: Hash of the node.
         :rtype: int
         """
-        return hash(self.src, self.target, frozenset(self.data))
+        return hash((self.src, self.target, frozenset(self.data)))
+    
+    def __str__(self) -> str:
+        """
+        Returns a string value based on the edge data.
+
+        :return: String representation of edge.
+        :rtype: str
+        """
+        return f"Edge(src_id={self.src.id}, data={self.data}, target_id={self.target.id})"
+    
+    def __repr__(self) -> str:
+        return self.__str__()

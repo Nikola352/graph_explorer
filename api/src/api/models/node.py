@@ -1,5 +1,3 @@
-from .edge import Edge
-
 class Node:
     """
     Class representing `Node` in a graph.
@@ -9,7 +7,7 @@ class Node:
         data: dict - Additional data of a node
         edges: list[Edge] - List of adjecent edges
     """
-    def __init__(self, id: str, data: dict, edges: list["Edge"] = None):
+    def __init__(self, id: str, data: dict, edges: list = None):
         """
         Initializes node object.
 
@@ -60,4 +58,16 @@ class Node:
         :rtype: int
         """
         return hash(self.id)
+    
+    def __str__(self) -> str:
+        """
+        Returns a string value based on the node data.
+
+        :return: String representation of node.
+        :rtype: str
+        """
+        return f"Node(id={self.id}, data={self.data}, edges={self.edges})"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
     
