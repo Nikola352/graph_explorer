@@ -42,6 +42,8 @@ class Graph(object):
         :param node:  The node to be added to the graph.
         :type node: `Node`
         """
+        if not isinstance(node, Node):
+            raise TypeError(f"Expected a Node instance, got {type(node).__name__}")
         self.nodes.add(node)
         
 
@@ -72,6 +74,8 @@ class Graph(object):
         :param node:  The node to be added to the graph.
         :type node: `Edge`
         """
+        if not isinstance(edge, Edge):
+            raise TypeError(f"Expected a Edge instance, got {type(edge).__name__}")
         self.nodes.add(edge.src)
         self.nodes.add(edge.target)
         if edge not in self.edges:
