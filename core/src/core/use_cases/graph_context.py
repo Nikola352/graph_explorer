@@ -3,7 +3,8 @@ from typing import List
 from api.components.data_source import DataSourcePlugin
 from api.components.visualizer import VisualizerPlugin
 from core.models.workspace import Workspace
-from core.use_cases.graph_store import query_graph, save_graph
+from core.repositories.graph_repository import query_graph, save_graph
+from core.use_cases import workspaces
 
 
 class GraphContext(object):
@@ -53,6 +54,7 @@ class GraphContext(object):
 
     def select_data_source(self, data_source_id: str):
         self._selected_data_source = self.data_source_plugins[data_source_id]
+        workspaces.set_data_source(self._workspace_id, data_source_id)
         self.refresh_data_source()
 
     def refresh_data_source(self):
@@ -63,3 +65,4 @@ class GraphContext(object):
 
     def select_visualizer(self, visualizer_id: str):
         self._selected_visualizer = self.visualizer_plugins[visualizer_id]
+        workspaces.set_visualizer(self._workspace_id, visualizer_id)
