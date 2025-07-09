@@ -8,17 +8,52 @@ from api.models.node import Node
 
 
 class GraphRepository(object):
+    """
+    Class responsible for storing and retrieving graph data from a Neo4j database.
+    """
+
     def __init__(self, uri: str, user: str, password: str):
+        """
+        Initializes the GraphRepository with database connection parameters.
+
+        :param uri: Neo4j database URI
+        :type uri: str
+        :param user: Database username
+        :type user: str
+        :param password: Database password
+        :type password: str
+        """
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
 
     def close(self):
+        """
+        Closes the database driver connection.
+        """
         self.driver.close()
 
     def save_graph(self, id: str, graph: Graph):
+        """
+        Saves a graph to the database with the given ID.
+
+        :param id: Unique identifier for the graph
+        :type id: str
+        :param graph: Graph object to be saved
+        :type graph: Graph
+        """
         with self.driver.session() as session:
             session.execute_write(self._save_graph, id, graph)
 
     def query_graph(self, id: str, filters: list) -> Graph:
+        """
+        Retrieves a graph from the database by its ID, optionally applying filters.
+
+        :param id: Unique identifier of the graph to retrieve
+        :type id: str
+        :param filters: List of filters to apply (currently unused)
+        :type filters: list
+        :return: Retrieved Graph object
+        :rtype: Graph
+        """
         query = """
         MATCH (n:Node {graph_id: $graph_id})-[r {graph_id: $graph_id}]->(m:Node {graph_id: $graph_id})
         RETURN n, r, m
