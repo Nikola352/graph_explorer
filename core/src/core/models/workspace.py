@@ -1,4 +1,8 @@
 class Workspace(object):
+    """
+    A data class representing a workspace. Can be serialized and stored in a persistence layer.
+    """
+
     def __init__(self,
                  id: str,
                  name: str,

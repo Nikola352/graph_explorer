@@ -1,3 +1,9 @@
+"""
+Persistence layer for Workspace objects.
+
+Uses TinyDB to store Workspaces as JSON files in the user data directory.
+"""
+
 from typing import Any, Dict, List, cast
 
 from tinydb import TinyDB
