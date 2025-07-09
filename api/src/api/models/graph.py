@@ -1,8 +1,9 @@
 from api.models.edge import Edge
 from api.models.node import Node
+from typing import Optional, Set
 
 
-class Graph(object):
+class Graph:
     """
     A class representing a graph structure composed of nodes and edges.
 
@@ -15,7 +16,8 @@ class Graph(object):
     :param root_id: Identifier for the root node in the graph.
     :type root_id: str
     """
-    def __init__(self, edges=None, nodes=None, directed=True, root_id=None):
+
+    def __init__(self, edges: Optional[Set[Edge]] = None, nodes: Optional[Set[Node]] = None, directed: Optional[bool] = True, root_id: Optional[str] = None):
         """
         Initializes a Graph object.
 
@@ -43,9 +45,9 @@ class Graph(object):
         :type node: `Node`
         """
         if not isinstance(node, Node):
-            raise TypeError(f"Expected a Node instance, got {type(node).__name__}")
+            raise TypeError(
+                f"Expected a Node instance, got {type(node).__name__}")
         self.nodes.add(node)
-        
 
     def remove_node(self, target_node: Node) -> None:
         """
@@ -59,15 +61,15 @@ class Graph(object):
         except KeyError:
             raise ValueError(f"{target_node} not found in graph!")
 
-        self.edges = set([edge for edge in self.edges if edge.src != target_node and edge.target != target_node])
+        self.edges = set([edge for edge in self.edges if edge.src !=
+                         target_node and edge.target != target_node])
         # remove edges from each node
         for node in self.nodes:
             node.edges = [
                 edge for edge in node.edges if edge.src != target_node and edge.target != target_node
             ]
-        
 
-    def add_edge(self, edge: Edge):
+    def add_edge(self, edge: Edge) -> None:
         """
         Adds an `Edge` to the graph.
 
@@ -75,7 +77,8 @@ class Graph(object):
         :type node: `Edge`
         """
         if not isinstance(edge, Edge):
-            raise TypeError(f"Expected a Edge instance, got {type(edge).__name__}")
+            raise TypeError(
+                f"Expected a Edge instance, got {type(edge).__name__}")
         self.nodes.add(edge.src)
         self.nodes.add(edge.target)
         if edge not in self.edges:
@@ -91,34 +94,36 @@ class Graph(object):
                 if not self.directed and node == edge.target:
                     node.edges.append(reversed_edge)
 
-
-
-
-    def remove_edge(self, target_edge: Edge):
+    def remove_edge(self, target_edge: Edge) -> None:
         """
         Removes an `Edge` to the graph.
 
         :param node:  The node to be removed from the graph.
         :type node: `Edge`
         """
-        if target_edge.src in self.nodes: self.nodes.remove(target_edge.src)
+        if target_edge.src in self.nodes:
+            self.nodes.remove(target_edge.src)
 
-        if target_edge.target in self.nodes: self.nodes.add(target_edge.target)
+        if target_edge.target in self.nodes:
+            self.nodes.add(target_edge.target)
 
         if target_edge in self.edges:
             self.edges.remove(target_edge)
 
             if not self.directed:
-                reversed_edge = Edge(target_edge.data, target_edge.target, target_edge.src)
+                reversed_edge = Edge(
+                    target_edge.data, target_edge.target, target_edge.src)
                 self.edges.remove(reversed_edge)
 
             for node in self.nodes:
                 if node == target_edge.src:
-                    node.edges = [edge for edge in node.edges if node != target_edge.src]
+                    node.edges = [
+                        edge for edge in node.edges if node != target_edge.src]
                 if not self.directed and node == target_edge.target:
-                    node.edges = [edge for edge in node.edges if node != target_edge.target]
+                    node.edges = [
+                        edge for edge in node.edges if node != target_edge.target]
 
-    def get_nodes(self) -> set["Node"]:
+    def get_nodes(self) -> Set["Node"]:
         """
         Retrieves all nodes in the graph.
 
@@ -126,8 +131,8 @@ class Graph(object):
         :rtype: set[`Node`]
         """
         return self.nodes
-    
-    def get_edges(self) -> set["Edge"]:
+
+    def get_edges(self) -> Set["Edge"]:
         """
         Retrieves all edges in the graph.
 
@@ -135,10 +140,9 @@ class Graph(object):
         :rtype: set[`Edge`]
         """
         return self.edges
-    
+
     def __str__(self) -> str:
         graph = f"Graph(root_id: {self.root_id}, directed: {self.directed}, nodes_count: {len(self.nodes)}, edges_count: {len(self.edges)})"
         for node in self.nodes:
             graph += "\n\t" + node.__str__()
         return graph
-        

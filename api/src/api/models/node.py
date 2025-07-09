@@ -1,3 +1,6 @@
+from typing import List, Optional, Dict
+
+
 class Node:
     """
     Class representing `Node` in a graph.
@@ -7,7 +10,8 @@ class Node:
         data: dict - Additional data of a node
         edges: list[Edge] - List of adjecent edges
     """
-    def __init__(self, id: str, data: dict, edges: list = None):
+
+    def __init__(self, id: str, data: Dict, edges: Optional[List] = None):
         """
         Initializes node object.
 
@@ -36,8 +40,8 @@ class Node:
         if isinstance(__value, Node):
             return self.id == __value.id
         return False
-    
-    def get_neighbours(self) -> list["Node"]:
+
+    def get_neighbours(self) -> List["Node"]:
         """
         Returns a list of neighboring nodes connected by outgoing edges.
 
@@ -49,7 +53,7 @@ class Node:
             if edge.src == self:
                 neighbours.append(edge.target)
         return neighbours
-    
+
     def __hash__(self) -> int:
         """
         Returns a hash value based on the node's unique identifier.
@@ -58,7 +62,7 @@ class Node:
         :rtype: int
         """
         return hash(self.id)
-    
+
     def __str__(self) -> str:
         """
         Returns a string value based on the node data.
@@ -67,7 +71,6 @@ class Node:
         :rtype: str
         """
         return f"Node(id={self.id}, data={self.data}, edges={self.edges})"
-    
+
     def __repr__(self) -> str:
         return self.__str__()
-    

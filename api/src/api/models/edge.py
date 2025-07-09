@@ -1,4 +1,5 @@
 from .node import Node
+from typing import Dict
 
 
 class Edge:
@@ -12,7 +13,8 @@ class Edge:
     :param data: Additional data associated with the edge.
     :type data: dict
     """
-    def __init__(self, data: dict, src: Node, target: Node):
+
+    def __init__(self, data: Dict, src: Node, target: Node):
         """
         Initializes Edge object.
 
@@ -29,7 +31,6 @@ class Edge:
         self.src = src
         self.target = target
 
-
     def __eq__(self, __value) -> bool:
         """
         Compares this edge to another edge based on their attribute values.
@@ -42,12 +43,12 @@ class Edge:
         if isinstance(__value, Edge):
             return (
                 self.data == __value.data and
-                self.src == __value.src and 
+                self.src == __value.src and
                 self.target == __value.target
-            )                
+            )
 
         return False
-    
+
     def __hash__(self) -> int:
         """
         Returns a hash value based on the edge's data.
@@ -56,7 +57,7 @@ class Edge:
         :rtype: int
         """
         return hash((self.src, self.target, frozenset(self.data)))
-    
+
     def __str__(self) -> str:
         """
         Returns a string value based on the edge data.
@@ -65,6 +66,6 @@ class Edge:
         :rtype: str
         """
         return f"Edge(src_id={self.src.id}, data={self.data}, target_id={self.target.id})"
-    
+
     def __repr__(self) -> str:
         return self.__str__()
