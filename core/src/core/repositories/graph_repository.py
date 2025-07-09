@@ -1,10 +1,9 @@
 from typing import Dict
 
-from neo4j import GraphDatabase, ManagedTransaction, Result
-
 from api.models.edge import Edge
 from api.models.graph import Graph
 from api.models.node import Node
+from neo4j import GraphDatabase, ManagedTransaction, Result
 
 
 class GraphRepository(object):
@@ -24,6 +23,23 @@ class GraphRepository(object):
         :type password: str
         """
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
+        self._initialize_schema()
+
+    def _initialize_schema(self):
+        """
+        Creates the necessary indexes to optimize query patterns in the current setup.
+        """
+        with self.driver.session() as session:
+            # Create node index
+            session.run("""
+            CREATE INDEX node_id_graph_index IF NOT EXISTS
+            FOR (n:Node) ON (n.id, n.graph_id)
+            """)
+            # Create relationship index
+            session.run("""
+            CREATE INDEX rel_graph_index IF NOT EXISTS
+            FOR ()-[r:inRelationTo]-() ON (r.graph_id)
+            """)
 
     def close(self):
         """
