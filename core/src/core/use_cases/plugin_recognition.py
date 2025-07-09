@@ -3,8 +3,8 @@ from typing import List, Tuple
 
 from api.components.data_source import DataSourcePlugin
 from api.components.visualizer import VisualizerPlugin
-from core.constants import (DATA_SOURCE_PLUGIN_GROUP_NAME,
-                            VISUALIZER_PLUGIN_GROUP_NAME)
+from core.config.constants import (DATA_SOURCE_PLUGIN_GROUP_NAME,
+                                   VISUALIZER_PLUGIN_GROUP_NAME)
 
 
 def load_plugins() -> Tuple[List[DataSourcePlugin], List[VisualizerPlugin]]:
