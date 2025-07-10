@@ -71,8 +71,10 @@ class GraphRepository(object):
         :rtype: Graph
         """
         query = """
+        MATCH (meta:GraphMeta {graph_id: $graph_id})
+        WITH meta
         MATCH (n:Node {graph_id: $graph_id})-[r {graph_id: $graph_id}]->(m:Node {graph_id: $graph_id})
-        RETURN n, r, m
+        RETURN n, r, m, meta
         """
         with self.driver.session() as session:
             result = session.run(query, graph_id=id)
@@ -80,29 +82,37 @@ class GraphRepository(object):
 
     @staticmethod
     def _save_graph(tx: ManagedTransaction, graph_id: str, graph: Graph):
+        # 1. Save graph metadata
+        tx.run("""
+            MERGE (meta:GraphMeta {graph_id: $graph_id})
+            SET meta.directed = $directed,
+                meta.root_id = $root_id,
+                meta.updated_at = datetime()
+        """, graph_id=graph_id, directed=graph.directed, root_id=graph.root_id)
+
         node_ids = [node.id for node in graph.nodes]
 
-        # 1. Delete nodes not in the current list
+        # 2. Delete nodes not in the current list
         tx.run("""
             MATCH (n:Node {graph_id: $graph_id})
             WHERE NOT n.id IN $node_ids
             DETACH DELETE n
         """, graph_id=graph_id, node_ids=node_ids)
 
-        # 2. Upsert nodes
+        # 3. Upsert nodes
         for node in graph.nodes:
             tx.run("""
                 MERGE (n:Node {id: $id, graph_id: $graph_id})
                 SET n = $props
             """, id=node.id, graph_id=graph_id, props={**node.data, "id": node.id, "graph_id": graph_id})
 
-        # 3. Delete all edges for this graph (simpler and safer than trying to diff)
+        # 4. Delete all edges for this graph (simpler and safer than trying to diff)
         tx.run("""
             MATCH (:Node {graph_id: $graph_id})-[r]->(:Node {graph_id: $graph_id})
             DELETE r
         """, graph_id=graph_id)
 
-        # 4. Recreate all edges
+        # 5. Recreate all edges
         for edge in graph.edges:
             query = f"""
                 MATCH (a:Node {{id: $from_id, graph_id: $graph_id}}),
@@ -117,8 +127,15 @@ class GraphRepository(object):
     def _parse_graph(result: Result) -> Graph:
         node_map: Dict[str, Node] = {}
         edges = set()
+        directed = True
+        root_id = None
 
         for record in result:
+            if "meta" in record:
+                meta = record["meta"]
+                directed = meta.get("directed", True)
+                root_id = meta.get("root_id", None)
+
             n_data = record["n"]
             m_data = record["m"]
             r_data = record["r"]
@@ -143,4 +160,4 @@ class GraphRepository(object):
             edge = Edge(data=edge_data, src=n_node, target=m_node)
             edges.add(edge)
 
-        return Graph(nodes=set(node_map.values()), edges=edges, directed=True, root_id=None)
+        return Graph(nodes=set(node_map.values()), edges=edges, directed=directed, root_id=root_id)
