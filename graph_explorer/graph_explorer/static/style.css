@@ -53,7 +53,7 @@ body,
 }
 
 #tree-view-panel {
-  flex-grow: 2;
+  flex-grow: 1;
 }
 #bird-view-panel,
 #main-view-panel {
@@ -103,11 +103,25 @@ a#create-workspace .material-symbols-outlined {
   flex-direction: column;
 }
 
+#tree-view-panel{
+  display: flex;
+  flex-direction: column;
+}
+
 #bird-view-panel .panel-heading {
   flex: 0;
 }
 
 #bird-view-panel .panel-block {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+#tree-view-panel .panel-heading {
+  flex: 0;
+}
+
+#tree-view-panel .panel-block {
   flex: 1;
   margin-bottom: 0;
 }
