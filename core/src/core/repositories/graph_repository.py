@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional, Tuple
 
 from api.models.edge import Edge
 from api.models.graph import Graph
@@ -70,15 +70,24 @@ class GraphRepository(object):
         :return: Retrieved Graph object
         :rtype: Graph
         """
-        query = """
+
+        metadata_query = """
         MATCH (meta:GraphMeta {graph_id: $graph_id})
-        WITH meta
-        MATCH (n:Node {graph_id: $graph_id})-[r {graph_id: $graph_id}]->(m:Node {graph_id: $graph_id})
-        RETURN n, r, m, meta
+        RETURN meta
         """
+
+        graph_query = """
+        MATCH (n:Node {graph_id: $graph_id})
+        OPTIONAL MATCH (n)-[r:inRelationTo {graph_id: $graph_id}]->(m:Node {graph_id: $graph_id})
+        RETURN n, r, m
+        """
+
         with self.driver.session() as session:
-            result = session.run(query, graph_id=id)
-            return self._parse_graph(result)
+            result = session.run(metadata_query, graph_id=id)
+            directed, root_id = self._parse_metadata(result)
+
+            result = session.run(graph_query, graph_id=id)
+            return self._parse_graph(result, directed, root_id)
 
     @staticmethod
     def _save_graph(tx: ManagedTransaction, graph_id: str, graph: Graph):
@@ -124,18 +133,21 @@ class GraphRepository(object):
                    graph_id=graph_id, data=edge.data)
 
     @staticmethod
-    def _parse_graph(result: Result) -> Graph:
-        node_map: Dict[str, Node] = {}
-        edges = set()
-        directed = True
-        root_id = None
-
+    def _parse_metadata(result: Result) -> Tuple[bool, Optional[str]]:
         for record in result:
-            if "meta" in record:
-                meta = record["meta"]
+            meta = record["meta"]
+            if meta:
                 directed = meta.get("directed", True)
                 root_id = meta.get("root_id", None)
+                return directed, root_id
+        return True, None
 
+    @staticmethod
+    def _parse_graph(result: Result, directed: bool = True, root_id: Optional[str] = None) -> Graph:
+        node_map: Dict[str, Node] = {}
+        edges = set()
+
+        for record in result:
             n_data = record["n"]
             m_data = record["m"]
             r_data = record["r"]
@@ -148,16 +160,18 @@ class GraphRepository(object):
             n_node = node_map[n_id]
 
             # Node m
-            m_id = m_data["id"]
-            if m_id not in node_map:
-                node_map[m_id] = Node(
-                    id=m_id, data={k: v for k, v in m_data.items() if k != "id" and k != "graph_id"})
-            m_node = node_map[m_id]
+            if m_data:
+                m_id = m_data["id"]
+                if m_id not in node_map:
+                    node_map[m_id] = Node(
+                        id=m_id, data={k: v for k, v in m_data.items() if k != "id" and k != "graph_id"})
+                m_node = node_map[m_id]
 
             # Edge
-            edge_data = {k: v for k, v in r_data.items() if k !=
-                         "graph_id"}
-            edge = Edge(data=edge_data, src=n_node, target=m_node)
-            edges.add(edge)
+            if r_data:
+                edge_data = {k: v for k, v in r_data.items() if k !=
+                             "graph_id"}
+                edge = Edge(data=edge_data, src=n_node, target=m_node)
+                edges.add(edge)
 
         return Graph(nodes=set(node_map.values()), edges=edges, directed=directed, root_id=root_id)
