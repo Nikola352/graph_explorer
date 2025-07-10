@@ -1,20 +1,148 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
+{% block title %}Graph Expressiveness{% endblock title %}
 
-<head>
-  <title>Graph Explorer</title>
-  {% load static %}
-  <link rel="icon" href="{% static 'favicon.ico' %}">
-  <link rel="stylesheet" href="{% static 'style.css' %}" />
-  <script type="text/javascript" src="{% static 'd3.v7.min.js' %}"></script>
-</head>
-
+{% block body %}
 <body>
-  <h1>Graph Explorer</h1>
+  <div id="container">
+    <aside class="vertical-container" id="workspace-bar">
+      <!-- Workspaces -->
+      <p class="panel-heading">Workspaces</p>
+      <ul class="menu-list">
+        {% for workspace in workspaces %} 
+        <li class="workspace-row {% if workspace.id == current_workspace_id %}highlight{% endif %}">
+          <a class="workspace-name">{{ workspace.name }}</a> 
+          <div class="icons-container">
+            <!--Edit workspace-->
+            <a class="link-button">
+              <span class="material-symbols-outlined">settings</span></a>
+            <!--Delete workspace-->
+            <a class="link-button">
+              <span class="material-symbols-outlined">close</span></a>
+          </div>
+        </li>
+        {% endfor %}
+        <li>
+          <!--Create workspace-->
+          <a id="create-workspace" class="row">
+            Create a new workspace <span class="material-symbols-outlined">add_circle</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
 
-  <main>
-    {{ graph_html|safe }}
-  </main>
+    <div class="vertical-container" id="left-panel">
+      <!--Tree view panel-->
+      <nav class="panel" id="tree-view-panel">
+        <p class="panel-heading">Tree View</p>
+          
+      </nav>
+
+      
+      <!--Bird view panel-->
+      <nav class="panel" id="bird-view-panel">
+        <p class="panel-heading">Bird View</p>
+        
+      </nav>
+    </div>
+
+    <div class="vertical-container">
+      <div class="horizontal-container">
+        <!--Visualizer panel-->
+        <nav class="panel" id="visualizer-select-panel">
+          <p class="panel-heading">Visualizer</p>
+          <div class="panel-block">
+            <div class="select">
+              <select id="visualizer-select">
+                {% for visualizer in visualizers %}
+                  <option value="{{ visualizer.name }}" {% if visualizer.name == current_visualizer %}selected{% endif %}>{{ visualizer.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </nav>
+        <!--Search and Filter panel-->
+        <nav class="panel" id="search-and-filter-panel">
+          <p class="panel-heading">Search and filter</p>
+          <div class="panel-block">
+            {% if active_ws_id != -1 %}
+            <form class="filter-form">
+              {% csrf_token %}
+              <input id="search-input" class="input" type="text" placeholder="Search" name="query" />
+              <input type="submit" value="Search" class="button" />
+            </form>
+            {% else %}
+            <div class="filter-form">
+              {% csrf_token %}
+              <input id="search-input" class="input" type="text" placeholder="Search" name="query" />
+              <input type="submit" value="Search" class="button" />
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="panel-block">
+            {% if active_ws_id != -1 %}
+            <form id="filter-form" class="filter-form">
+              {% csrf_token %}
+              <input name="attribute" id="filter-attribute-input" class="input" type="text" placeholder="Attribute" />
+              <div class="select">
+                <select name="operator">
+                  {% for operator in operators %}
+                  <option value="{{ operator|safe }}">{{ operator }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <input name="value" id="filter-value-input" class="input" type="text" placeholder="Value" />
+              <input type="submit" value="Filter" class="button" />
+            </form>
+            {% else %}
+            <div id="filter-form" class="filter-form">
+              {% csrf_token %}
+              <input name="attribute" id="filter-attribute-input" class="input" type="text" placeholder="Attribute" />
+              <div class="select">
+                <select name="operator">
+                  {% for operator in operators %}
+                  <option value="{{ operator|safe }}">{{ operator }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <input name="value" id="filter-value-input" class="input" type="text" placeholder="Value" />
+              <input type="submit" value="Filter" class="button" />
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="panel-block">
+            <div class="active-filters">
+              <span>Active filters:</span>
+              {% for filter in filters %}
+              <div class="filter">
+                {% if filter.type == 'search' %}
+                {{ filter.search_term }}
+                {% elif filter.type == 'filter' %}
+                {{ filter.attribute }} {{ filter.operator }} {{ filter.value }}
+                {% endif %}
+                <span class="material-symbols-outlined remove">remove</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      <!--Main view panel-->
+      <nav class="panel" id="main-view-panel">
+        <p class="panel-heading">Main View</p>
+        <div class="panel-block">
+          {% if content %}
+            {% include "bird_view.html" %}
+          {% else %}
+            <div class="vertical-container error-container">
+              <h2 class="error-no-content">No workspace selected</h2>
+            </div>
+          {% endif %}
+        </div>
+      </nav>
+    </div>
+  </div>
 </body>
-
-</html>
+{% endblock body %}

@@ -14,6 +14,9 @@ def index(request):
     core_app: Application = apps.get_app_config(
         'graph_explorer').core_app  # type: ignore
 
-    print([w.to_dict() for w in workspaces.get_workspaces()])
-
-    return render(request, "index.html", core_app.get_context())
+    context = core_app.get_context()
+    current_workspace = next(
+        (w for w in context["workspaces"] if w.id == context["current_workspace_id"]), None)
+    context["filters"] = current_workspace.filters if current_workspace else [""]
+    context["operators"] = ["==", "!=", "<", "<=", ">", ">="]
+    return render(request, "index.html", context)
