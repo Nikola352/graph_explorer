@@ -20,4 +20,6 @@ def index(request):
     print([w.to_dict() for w in workspaces.get_workspaces()])
     print(graph_context.get_context())
 
-    return render(request, "index.html", core_app.get_context())
+    context = core_app.get_context()
+    context["operators"] = ["==", "!=", "<", "<=", ">", ">="]
+    return render(request, "index.html", context)
