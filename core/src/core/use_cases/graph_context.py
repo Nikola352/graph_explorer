@@ -2,6 +2,7 @@ from typing import List
 
 from api.components.data_source import DataSourcePlugin
 from api.components.visualizer import VisualizerPlugin
+from core.models.filter import Filter
 from core.models.workspace import Workspace
 from core.repositories.graph_repository import query_graph, save_graph
 from core.use_cases import workspaces
@@ -61,6 +62,7 @@ class GraphContext(object):
         elif visualizer_plugins:
             # use the first visualizer as default if none is selected
             self._selected_visualizer = visualizer_plugins[0]
+        self.filters: List[Filter] = []
 
     def get_context(self) -> dict:
         """
@@ -120,3 +122,9 @@ class GraphContext(object):
         """
         self._selected_visualizer = self.visualizer_plugins[visualizer_id]
         workspaces.set_visualizer(self._workspace_id, visualizer_id)
+
+    def add_filter(self, filter: Filter):
+        self.filters.append(filter)
+
+    def remove_filter(self, filter: Filter):
+        self.filters = [f for f in self.filters if f != filter]

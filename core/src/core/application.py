@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+from core.models.filterOperator import FilterOperator
 from core.use_cases.graph_context import GraphContext
 from core.use_cases.plugin_recognition import load_plugins
 from core.use_cases.workspaces import (get_workspace, get_workspaces,
@@ -46,6 +47,7 @@ class Application(object):
         return {
             "current_workspace_id": self.current_workspace_id,
             "workspaces": get_workspaces(),
+            "operators": FilterOperator.choices(),
             **self.graph_context.get_context()
         }
 
