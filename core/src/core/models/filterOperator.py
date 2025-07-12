@@ -14,8 +14,8 @@ class FilterOperator(str, Enum):
 
     def symbol(self) -> str:
         return {
-            FilterOperator.EQUALS: "==",
-            FilterOperator.NOT_EQUALS: "!=",
+            FilterOperator.EQUALS: "=",
+            FilterOperator.NOT_EQUALS: "<>",
             FilterOperator.GREATER_THAN: ">",
             FilterOperator.LESS_THAN: "<",
             FilterOperator.LESS_THAN_OR_EQUAL: "<=",

@@ -1,9 +1,11 @@
-from typing import Dict, Optional, Tuple
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple, cast
 
 from api.models.edge import Edge
 from api.models.graph import Graph
 from api.models.node import Node
-from neo4j import GraphDatabase, ManagedTransaction, Result
+from core.models.filter import Filter
+from neo4j import GraphDatabase, ManagedTransaction, Query, Result
 
 
 class GraphRepository(object):
@@ -59,7 +61,7 @@ class GraphRepository(object):
         with self.driver.session() as session:
             session.execute_write(self._save_graph, id, graph)
 
-    def query_graph(self, id: str, filters: list) -> Graph:
+    def query_graph(self, id: str, filters: List[Filter]) -> Graph:
         """
         Retrieves a graph from the database by its ID, optionally applying filters.
 
@@ -78,7 +80,9 @@ class GraphRepository(object):
 
         graph_query = """
         MATCH (n:Node {graph_id: $graph_id})
+        {n_where_clause}
         OPTIONAL MATCH (n)-[r:inRelationTo {graph_id: $graph_id}]->(m:Node {graph_id: $graph_id})
+        {m_where_clause}
         RETURN n, r, m
         """
 
@@ -86,7 +90,13 @@ class GraphRepository(object):
             result = session.run(metadata_query, graph_id=id)
             directed, root_id = self._parse_metadata(result)
 
-            result = session.run(graph_query, graph_id=id)
+            n_where_clause, params = self._build_where_clause(filters, "", "n")
+            m_where_clause, params = self._build_where_clause(filters, "", "m")
+            query = cast(Query, graph_query
+                         .replace("{n_where_clause}", n_where_clause)
+                         .replace("{m_where_clause}", m_where_clause)
+                         )
+            result = session.run(query, graph_id=id, **params)
             return self._parse_graph(result, directed, root_id)
 
     @staticmethod
@@ -175,3 +185,41 @@ class GraphRepository(object):
                 edges.add(edge)
 
         return Graph(nodes=set(node_map.values()), edges=edges, directed=directed, root_id=root_id)
+
+    def _build_where_clause(self, filters: List[Filter], search_term: Optional[str], node_name: str) -> Tuple[str, Dict]:
+        filter_clause, params = self._build_filter_clause(filters, node_name)
+        clauses = [filter_clause]
+        if search_term:
+            search_clause, search_params = self._build_search_clause(
+                search_term, node_name)
+            clauses.append(search_clause)
+            params.update(search_params)
+        clause_str = " AND ".join(clauses)
+        return "WHERE " + clause_str if clause_str else "", params
+
+    @staticmethod
+    def _build_filter_clause(filters: List[Filter], node_name: str) -> Tuple[str, Dict]:
+        clauses = []
+        params = {}
+
+        for i, f in enumerate(filters):
+            param_key = f"_param_{i}"
+            if f.type == 'int' or f.type == 'float':
+                params[param_key] = f.value
+                clause = f"({node_name}.{f.field} {str(f.operator)} ${param_key})"
+            elif f.type == 'datetime':
+                date_value = cast(datetime, f.value)
+                clause = f"({node_name}.{f.field} {str(f.operator)} date('{date_value.isoformat()}'))"
+            else:  # str
+                params[param_key] = f.value
+                clause = f"({node_name}.{f.field} {str(f.operator)} ${param_key})"
+            clauses.append(clause)
+
+        return " AND ".join(clauses), params
+
+    @staticmethod
+    def _build_search_clause(search_term: str, node_name: str) -> Tuple[str, Dict]:
+        search_term_key = "search_term"
+        clause = f"ANY(prop IN keys({node_name}) WHERE {node_name}[prop] =~ '(?i).*${search_term_key}.*')"
+        params = {search_term_key: search_term}
+        return clause, params

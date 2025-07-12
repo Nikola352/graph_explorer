@@ -71,7 +71,8 @@ class GraphContext(object):
         elif visualizer_plugins:
             # use the first visualizer as default if none is selected
             self._selected_visualizer = visualizer_plugins[0]
-        self.filters: List[Filter] = []
+
+        self.filters: List[Filter] = workspace.filters
 
     def get_context(self) -> dict:
         """
@@ -87,7 +88,8 @@ class GraphContext(object):
         """
         graph_html = ""
         if self._selected_data_source is not None and self._selected_visualizer is not None:
-            graph = self._graph_repository.query_graph(self._workspace_id, [])
+            graph = self._graph_repository.query_graph(
+                self._workspace_id, self.filters)
             graph_html = self._selected_visualizer.display(graph)
 
         return {
@@ -136,6 +138,8 @@ class GraphContext(object):
 
     def add_filter(self, filter: Filter):
         self.filters.append(filter)
+        self._workspace_service.set_filters(self._workspace_id, self.filters)
 
     def remove_filter(self, filter: Filter):
         self.filters = [f for f in self.filters if f != filter]
+        self._workspace_service.set_filters(self._workspace_id, self.filters)

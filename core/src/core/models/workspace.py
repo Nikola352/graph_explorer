@@ -1,3 +1,8 @@
+from typing import List
+
+from core.models.filter import Filter
+
+
 class Workspace(object):
     """
     A data class representing a workspace. Can be serialized and stored in a persistence layer.
@@ -8,7 +13,7 @@ class Workspace(object):
                  name: str,
                  data_source_id: str | None = None,
                  visualizer_id: str | None = None,
-                 filters: list = [],
+                 filters: List[Filter] = [],
                  ):
         self.id = id
         self.name = name
@@ -22,7 +27,7 @@ class Workspace(object):
             "name": self.name,
             "data_source_id": self.data_source_id,
             "visualizer_id": self.visualizer_id,
-            "filters": self.filters,
+            "filters": [f.to_dict() for f in self.filters],
         }
 
     @classmethod
@@ -32,6 +37,6 @@ class Workspace(object):
             name=data['name'],
             data_source_id=data.get('data_source_id'),
             visualizer_id=data.get('visualizer_id'),
-            filters=data.get('filters', [])
+            filters=[Filter.from_dict(f) for f in data.get('filters', [])]
         )
         return workspace

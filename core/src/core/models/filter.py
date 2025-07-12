@@ -1,5 +1,6 @@
-from core.models.filterOperator import FilterOperator
 from datetime import datetime
+
+from core.models.filterOperator import FilterOperator
 
 
 class Filter():
@@ -12,27 +13,27 @@ class Filter():
     def parse_value(self, value) -> object:
         try:
             self.value = int(value)
-            self.type = int
+            self.type = 'int'
             return
         except ValueError:
             pass
         try:
             self.value = float(value)
-            self.type = float
+            self.type = 'float'
             return
         except ValueError:
             pass
         try:
             self.value = datetime.strptime(value, "%Y-%m-%d").date()
-            self.type = datetime
+            self.type = 'datetime'
             return
         except ValueError:
             pass
         # if string operator can be == or !=
-        if self.operator != FilterOperator.EQUALS and self.operator != FilterOperator:
+        if self.operator != FilterOperator.EQUALS and self.operator != FilterOperator.NOT_EQUALS:
             raise ValueError("Invalid string operator!")
 
-        self.type = str
+        self.type = 'str'
         self.value = value
 
     def __eq__(self, __value) -> bool:
@@ -44,3 +45,19 @@ class Filter():
 
     def __str__(self) -> str:
         return f"Filter(field: '{self.field}', operator: '{self.operator}', value: '{self.value}', type: '{self.type}')"
+
+    def to_dict(self) -> dict:
+        return {
+            'field': self.field,
+            'operator': self.operator,
+            'value': self.value,
+            'type': self.type
+        }
+
+    @staticmethod
+    def from_dict(d: dict) -> "Filter":
+        return Filter(
+            field=d['field'],
+            operator=FilterOperator(d['operator']),
+            value=d['value']
+        )
