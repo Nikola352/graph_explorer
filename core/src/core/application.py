@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+from core.models.filterOperator import FilterOperator
 from core.config.application_config import ApplicationConfig, load_app_config
 from core.repositories.graph_repository import GraphRepository
 from core.repositories.workspace_repository import WorkspaceRepository
@@ -63,6 +64,7 @@ class Application(object):
         return {
             "current_workspace_id": self.current_workspace_id,
             "workspaces": self.workspace_service.get_workspaces(),
+            "operators": FilterOperator.choices(),
             **self.graph_context.get_context()
         }
 
