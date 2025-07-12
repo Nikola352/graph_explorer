@@ -4,8 +4,8 @@ from api.components.data_source import DataSourcePlugin
 from api.components.visualizer import VisualizerPlugin
 from core.models.filter import Filter
 from core.models.workspace import Workspace
-from core.repositories.graph_repository import query_graph, save_graph
-from core.use_cases import workspaces
+from core.repositories.graph_repository import GraphRepository
+from core.use_cases.workspaces import WorkspaceService
 
 
 class GraphContext(object):
@@ -32,6 +32,8 @@ class GraphContext(object):
                  workspace: Workspace,
                  data_source_plugins: List[DataSourcePlugin],
                  visualizer_plugins: List[VisualizerPlugin],
+                 workspace_service: WorkspaceService,
+                 graph_repository: GraphRepository,
                  ):
         """
         Initializes the GraphContext with workspace and plugins.
@@ -42,7 +44,14 @@ class GraphContext(object):
         :type data_source_plugins: List[DataSourcePlugin]
         :param visualizer_plugins: List of available visualizer plugins
         :type visualizer_plugins: List[VisualizerPlugin]
+        :param workspace_service: Repository for persisting updates to the graph context
+        :type workspace_service: WorkspaceService
+        :param graph_repository: Repository for managing persistent graph storage
+        :type graph_repository: GraphRepository
         """
+        self._workspace_service = workspace_service
+        self._graph_repository = graph_repository
+
         # save as dict for fast lookup
         self.data_source_plugins = {
             p.identifier(): p for p in data_source_plugins}
@@ -78,7 +87,7 @@ class GraphContext(object):
         """
         graph_html = ""
         if self._selected_data_source is not None and self._selected_visualizer is not None:
-            graph = query_graph(self._workspace_id, [])
+            graph = self._graph_repository.query_graph(self._workspace_id, [])
             graph_html = self._selected_visualizer.display(graph)
 
         return {
@@ -98,7 +107,8 @@ class GraphContext(object):
         :raises KeyError: If the data source ID is not found
         """
         self._selected_data_source = self.data_source_plugins[data_source_id]
-        workspaces.set_data_source(self._workspace_id, data_source_id)
+        self._workspace_service.set_data_source(
+            self._workspace_id, data_source_id)
         self.refresh_data_source()
 
     def refresh_data_source(self):
@@ -110,7 +120,7 @@ class GraphContext(object):
         if self._selected_data_source is None:
             raise KeyError("No data source selected")
         graph = self._selected_data_source.load()
-        save_graph(self._workspace_id, graph)
+        self._graph_repository.save_graph(self._workspace_id, graph)
 
     def select_visualizer(self, visualizer_id: str):
         """
@@ -121,7 +131,8 @@ class GraphContext(object):
         :raises KeyError: If the visualizer ID is not found
         """
         self._selected_visualizer = self.visualizer_plugins[visualizer_id]
-        workspaces.set_visualizer(self._workspace_id, visualizer_id)
+        self._workspace_service.set_visualizer(
+            self._workspace_id, visualizer_id)
 
     def add_filter(self, filter: Filter):
         self.filters.append(filter)
