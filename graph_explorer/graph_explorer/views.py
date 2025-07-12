@@ -1,17 +1,15 @@
-from core.use_cases.workspaces import WorkspaceService
-from core.use_cases.graph_context import GraphContext
-from core.use_cases import workspaces
-from core.models.filter import Filter, FilterOperator
 import json
+
 from django.apps import apps
 from django.http import HttpRequest, JsonResponse
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_protect, csrf_exempt
+from django.shortcuts import redirect, render
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
 from core.application import Application
-<< << << < HEAD
-== == == =
->>>>>> > 80bcc3e644d906ee42c7a7166b2f30440f3b22a4
+from core.models.filter import Filter, FilterOperator
+from core.use_cases import workspaces
+from core.use_cases.graph_context import GraphContext
+from core.use_cases.workspaces import WorkspaceService
 
 
 def index(request):
@@ -24,21 +22,18 @@ def index(request):
     core_app: Application = apps.get_app_config(
         'graph_explorer').core_app  # type: ignore
 
-    print([w.to_dict() for w in workspaces.get_workspaces()])
-    print(graph_context.get_context())
-
     context = core_app.get_context()
     current_workspace = next(
         (w for w in context["workspaces"] if w.id == context["current_workspace_id"]), None)
     context["filters"] = current_workspace.filters if current_workspace else [""]
-    # context["operators"] = ["==", "!=", "<", "<=", ">", ">="]
     return render(request, "index.html", context)
 
 
 @csrf_protect
 def filter_view(request: HttpRequest):
-    # try create filter object
-    # if error return error else created object send to filter graph
+    graph_context: GraphContext = apps.get_app_config(
+        'graph_explorer').graph_context  # type: ignore
+
     if request.method == "POST":
         try:
             data = json.loads(request.body)
@@ -50,8 +45,8 @@ def filter_view(request: HttpRequest):
                 raise ValueError("Fields are required!")
             new_filter = Filter(
                 attribute, operator=FilterOperator(operator), value=value)
-            print(new_filter)
-            return JsonResponse({"message": "moja poruka", "received": data})
+            graph_context.add_filter(new_filter)
+            return redirect('index')
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
         except ValueError as e:
