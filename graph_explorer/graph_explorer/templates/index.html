@@ -8,7 +8,10 @@
       <p class="panel-heading">Workspaces</p>
       <ul class="menu-list">
         {% for workspace in workspaces %} 
-        <li class="workspace-row {% if workspace.id == current_workspace_id %}highlight{% endif %}">
+        <li 
+          class="workspace-row {% if workspace.id == current_workspace_id %}highlight{% endif %}"
+          data-workspace-id="{{ workspace.id }}"
+        >
           <a class="workspace-name" onclick="selectWorkspace({{ workspace.id }})">{{ workspace.name }}</a>
           <div class="icons-container">
             <!--Edit workspace-->
@@ -18,7 +21,7 @@
             >
               <span class="material-symbols-outlined">settings</span></a>
             <!--Delete workspace-->
-            <a class="link-button">
+            <a class="link-button" onclick="deleteWorkspace({{workspace.id}})">
               <span class="material-symbols-outlined">close</span></a>
           </div>
         </li>

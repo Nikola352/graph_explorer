@@ -145,3 +145,17 @@ def save_workspace(request: HttpRequest) -> HttpResponse:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     except KeyError:
         return JsonResponse({"error": f"Workspace not found: {workspace_id}"}, status=400)
+
+
+def delete_workspace(request: HttpRequest, workspace_id: str) -> HttpResponse:
+    if request.method != "DELETE":
+        return HttpResponseNotAllowed(['DELETE'])
+
+    workspace_service: WorkspaceService = apps.get_app_config(
+        'graph_explorer').workspace_service  # type: ignore
+
+    try:
+        workspace_service.remove_workspace(workspace_id)
+        return JsonResponse({"message": f"Successfully removed the workspace"})
+    except KeyError:
+        return JsonResponse({"error": f"Workspace not found: {workspace_id}"}, status=400)

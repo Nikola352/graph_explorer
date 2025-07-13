@@ -9,4 +9,5 @@ urlpatterns = [
     path('select-workspace/', views.select_workspace),
     path('workspace-form/', views.workspace_form),
     path('save-workspace/', views.save_workspace, name='save-workspace'),
+    path('delete-workspace/<str:workspace_id>/', views.delete_workspace),
 ]

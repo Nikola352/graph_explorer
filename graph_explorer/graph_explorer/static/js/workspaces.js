@@ -96,3 +96,39 @@ function addWorkspaceFormSubmitListener() {
       });
   });
 }
+
+function deleteWorkspace(workspace_id) {
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  fetch(`delete-workspace/${workspace_id}/`, {
+    method: "DELETE",
+    headers: {
+      "X-CSRFToken": csrfToken,
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        return response
+          .json()
+          .then((errData) => {
+            console.error("Error:", errData.error || "Server error");
+          })
+          .catch((err) => {
+            console.error("Error:", err.error || "Server error");
+          });
+      }
+
+      const workspaceElement = document.querySelector(
+        `.workspace-row[data-workspace-id="${workspace_id}"]`
+      );
+
+      if (workspaceElement) {
+        workspaceElement.remove();
+      }
+
+      console.log("Successfully deleted the workspace.");
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
+}
