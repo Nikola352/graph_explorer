@@ -1,7 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from core.models.filterOperator import FilterOperator
 from core.config.application_config import ApplicationConfig, load_app_config
+from core.models.filterOperator import FilterOperator
+from core.models.workspace import Workspace
 from core.repositories.graph_repository import GraphRepository
 from core.repositories.workspace_repository import WorkspaceRepository
 from core.use_cases.graph_context import GraphContext
@@ -68,7 +69,7 @@ class Application(object):
             **self.graph_context.get_context()
         }
 
-    def select_workspace(self, workspace_id: str):
+    def select_workspace(self, workspace_id: str) -> Workspace:
         """
         Changes the active workspace to the specified workspace.
 
@@ -87,3 +88,4 @@ class Application(object):
             self.workspace_service,
             self.graph_repository,
         )
+        return workspace

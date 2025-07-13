@@ -9,7 +9,7 @@
       <ul class="menu-list">
         {% for workspace in workspaces %} 
         <li class="workspace-row {% if workspace.id == current_workspace_id %}highlight{% endif %}">
-          <a class="workspace-name">{{ workspace.name }}</a> 
+          <a class="workspace-name" onclick="selectWorkspace({{ workspace.id }})">{{ workspace.name }}</a>
           <div class="icons-container">
             <!--Edit workspace-->
             <a class="link-button">
@@ -38,7 +38,7 @@
               {% include "tree_view.html" %}
             {% else %}
               <div class="vertical-container error-container">
-                <h2 class="error-no-content">No workspace selected</h2>
+                <h2 class="error-no-content">No data source selected</h2>
               </div>
             {% endif %}
           </div>
@@ -53,7 +53,7 @@
             {% include "bird_view.html" %}
           {% else %}
             <div class="vertical-container error-container">
-              <h2 class="error-no-content">No workspace selected</h2>
+              <h2 class="error-no-content">No data source selected</h2>
             </div>
           {% endif %}
         </div>
@@ -157,7 +157,7 @@
             {% include "bird_view.html" %}
           {% else %}
             <div class="vertical-container error-container">
-              <h2 class="error-no-content">No workspace selected</h2>
+              <h2 class="error-no-content">No data source selected</h2>
             </div>
           {% endif %}
         </div>

@@ -76,3 +76,25 @@ def select_visualizer(request: HttpRequest) -> HttpResponse:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     except KeyError:
         return JsonResponse({"error": f"Visualizer not found: {visualizer_id}"}, status=400)
+
+
+def select_workspace(request: HttpRequest) -> HttpResponse:
+    if request.method != "POST":
+        return HttpResponseNotAllowed(['POST'])
+
+    app: Application = apps.get_app_config(
+        'graph_explorer').core_app  # type: ignore
+
+    try:
+        data = json.loads(request.body)
+        workspace_id = data.get("workspace_id")
+        if workspace_id is None:
+            return JsonResponse({"error": "Missing 'workspace_id'"}, status=400)
+
+        workspace = app.select_workspace(str(workspace_id))
+
+        return JsonResponse({"message": f"Selected {workspace.name}"})
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except KeyError:
+        return JsonResponse({"error": f"Workspace not found: {workspace_id}"}, status=400)
