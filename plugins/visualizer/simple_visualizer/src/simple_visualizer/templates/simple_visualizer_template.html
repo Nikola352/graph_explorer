@@ -1,0 +1,128 @@
+<style>
+.node {
+  cursor: pointer;
+}
+
+.link {
+  stroke: #1a699e82;
+  stroke-width: 1.5px;
+}
+
+#svg-{{name}} {
+    width: 100%;
+    height: 100%;
+}
+
+</style>
+<script>
+</script>
+<svg id="svg-{{name}}">
+
+</svg>
+<script>
+    function render() {
+        function getNodeId(nodeName){
+            return nodeName.split(":")[1];
+        }
+        function createNodeId(id){
+            return `ID:${id}`;
+        }
+
+        var nodes = [
+            {% for n in nodes %}
+            {
+                id: createNodeId("{{ n.id }}"),
+                data: {{ n.data | tojson }},
+            },
+            {% endfor %}
+        ];
+
+        var links = [
+            {% for e in edges %}
+            {
+                source: createNodeId("{{ e.src.id }}"),
+                target: createNodeId("{{ e.target.id }}"),
+                data: {{ e.data | tojson }},
+            },
+            {% endfor %}
+        ];
+
+        links = links.map(link => ({
+            ...link,
+            source: nodes.find(n => n.id === link.source),
+            target: nodes.find(n => n.id === link.target),
+        }));
+
+        d3.select('#svg-{{name}}').append('defs')
+        .append('marker')
+        .attr("id", "arrowhead")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 44)
+        .attr("refY", 0)
+        .attr("markerWidth", 9)
+        .attr("markerHeight", 9)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M0,-5 L10,0 L0,5")
+        .attr("fill", "#1a699e82");
+
+        var g = d3.select('#svg-{{name}}').append('g');
+
+        const link = g.selectAll(".link")
+            .data(links).enter()
+            .append("line")
+            {% if directed %}
+            .attr("marker-end", 'url(#arrowhead)')
+            {% endif %}
+            .attr("class" , "link");
+    
+        const node = g.selectAll(".node")
+            .data(nodes)
+            .enter()
+            .append("g")
+            .attr("class", "node")
+            .attr("id", d => d.id);
+
+        const radius=34;
+        const textSize=14;
+        d3.selectAll('.node').append('circle')
+            .attr('r', radius+textSize)
+            .style('fill', 'white')
+            .style('stroke', '#04446fff')
+            .style('stroke-width', '1.5px')
+            .each(function(d) {
+                d3.select("g[id=\""+d.id+"\"]")
+                .append('text')
+                .attr('x', 0)                   
+                .attr('y', textSize / 3)        
+                .attr('text-anchor', 'middle')
+                .attr('font-size',textSize)
+                .attr('font-family','TimesNewRomance')
+                .attr('font-weight', 'bold')
+                .attr('fill','#1a699e')
+                .text(d.id);
+            });
+
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).distance(300))
+            .force("charge", d3.forceManyBody().strength(100))
+            .force("center", d3.forceCenter(1000 / 2, 700 / 2))
+            .force("gravity", d3.forceManyBody().strength(-100))
+            .force("collide", d3.forceCollide().radius(80))
+            .on("tick", tick);
+
+        function tick() {
+            link
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+    
+            node.attr("transform", function(d) {
+                return "translate(" + d.x + "," + d.y + ")";
+            })
+        }
+    }
+    render();
+</script>
+
