@@ -10,4 +10,5 @@ urlpatterns = [
     path('workspace-form/', views.workspace_form),
     path('save-workspace/', views.save_workspace, name='save-workspace'),
     path('delete-workspace/<str:workspace_id>/', views.delete_workspace),
+    path('data-source-config', views.data_source_config),
 ]

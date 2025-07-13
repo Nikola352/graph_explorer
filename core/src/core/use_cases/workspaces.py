@@ -29,16 +29,20 @@ class WorkspaceService(object):
         if not workspaces:
             self.create_workspace("Default Workspace")
 
-    def create_workspace(self, name: str, data_source_id: str | None = None) -> Workspace:
+    def create_workspace(self, name: str, data_source_id: str | None = None, data_source_config: dict = {}) -> Workspace:
         """
         Creates an empty workspace with the given name.
         
         :param name: The name of the new workspace.
         :type name: str
+        :param data_source_id: The identifier of the selected data source.
+        :type data_source_id: str
+        :param data_source_config: Arbitrary config parameters for the data source
+        :type data_source_config: dict
         :return: Newly created workspace
         :rtype: Workspace
         """
-        return self.repo.insert(Workspace("", name, data_source_id=data_source_id))
+        return self.repo.insert(Workspace("", name, data_source_id=data_source_id, data_source_config=data_source_config))
 
     def remove_workspace(self, id: str):
         """
@@ -72,7 +76,7 @@ class WorkspaceService(object):
         """
         return self.repo.get(id)
 
-    def update(self, workspace_id: str, name: str, data_source_id: str | None = None) -> Workspace:
+    def update(self, workspace_id: str, name: str, data_source_id: str | None = None, data_source_config: dict = {}) -> Workspace:
         """
         Updates the name of a workspace.
 
@@ -80,6 +84,10 @@ class WorkspaceService(object):
         :type workspace_id: str
         :param name: New name for the workspace
         :type name: str
+        :param data_source_id: The identifier of the selected data source.
+        :type data_source_id: str
+        :param data_source_config: Arbitrary config parameters for the data source
+        :type data_source_config: dict
         :raises KeyError: If no workspace exists with the given ID
         :return: Doesn't return anything but updates the workspace name
         :rtype: None
@@ -89,6 +97,7 @@ class WorkspaceService(object):
             raise KeyError
         workspace.name = name
         workspace.data_source_id = data_source_id
+        workspace.data_source_config = data_source_config
         return self.repo.update(workspace)
 
     def set_filters(self, workspace_id: str, filters: List):

@@ -1,7 +1,11 @@
 # TODO: Remove this
 
-from api.components.data_source import DataSourcePlugin
+from typing import List
+
+from api.components.data_source import DataSourceConfigParam, DataSourcePlugin
+from api.models.edge import Edge
 from api.models.graph import Graph
+from api.models.node import Node
 
 
 class EmptyDataSource(DataSourcePlugin):
@@ -17,3 +21,6 @@ class EmptyDataSource(DataSourcePlugin):
 
     def load(self, **kwargs) -> Graph:
         return Graph()
+
+    def get_configuration_parameters(self) -> List[DataSourceConfigParam]:
+        return []
