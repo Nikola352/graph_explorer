@@ -59,6 +59,8 @@ class Application(object):
         :return: A dictionary containing:
             - current_workspace_id: ID of the active workspace
             - workspaces: List of all available workspaces
+            - data_sources: Available data sources
+            - visualizers: Available visualizers
             - all the keys from the current graph context
         :rtype: dict[str, Any]
         """
@@ -66,6 +68,8 @@ class Application(object):
             "current_workspace_id": self.current_workspace_id,
             "workspaces": self.workspace_service.get_workspaces(),
             "operators": FilterOperator.choices(),
+            "data_sources": self.data_source_plugins,
+            "visualizers": self.visualizer_plugins,
             **self.graph_context.get_context()
         }
 

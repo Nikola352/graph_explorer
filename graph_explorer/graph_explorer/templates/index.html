@@ -12,7 +12,10 @@
           <a class="workspace-name" onclick="selectWorkspace({{ workspace.id }})">{{ workspace.name }}</a>
           <div class="icons-container">
             <!--Edit workspace-->
-            <a class="link-button">
+            <a 
+              class="link-button"
+              onclick='openWorkspaceForm({"id": {{ workspace.id }}, "name": "{{ workspace.name }}", "data_source": "{{ workspace.data_source_id }}"})'
+            >
               <span class="material-symbols-outlined">settings</span></a>
             <!--Delete workspace-->
             <a class="link-button">
@@ -22,7 +25,7 @@
         {% endfor %}
         <li>
           <!--Create workspace-->
-          <a id="create-workspace" class="row">
+          <a id="create-workspace" class="row" onclick="openWorkspaceForm()">
             Create a new workspace <span class="material-symbols-outlined">add_circle</span>
           </a>
         </li>

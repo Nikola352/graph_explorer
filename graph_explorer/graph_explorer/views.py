@@ -98,3 +98,50 @@ def select_workspace(request: HttpRequest) -> HttpResponse:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     except KeyError:
         return JsonResponse({"error": f"Workspace not found: {workspace_id}"}, status=400)
+
+
+def workspace_form(request: HttpRequest) -> HttpResponse:
+    app: Application = apps.get_app_config(
+        'graph_explorer').core_app  # type: ignore
+    return render(request, "workspace_form.html", app.get_context())
+
+
+def save_workspace(request: HttpRequest) -> HttpResponse:
+    if request.method not in ["POST", "PUT"]:
+        return HttpResponseNotAllowed(["POST", "PUT"])
+
+    workspace_service: WorkspaceService = apps.get_app_config(
+        'graph_explorer').workspace_service  # type: ignore
+
+    app: Application = apps.get_app_config(
+        'graph_explorer').core_app  # type: ignore
+
+    try:
+        data = json.loads(request.body)
+        name, data_source_id = data.get("name"), data.get("data_source_id")
+        if not name:
+            return JsonResponse({"error": "Missing 'name'"}, status=400)
+        if not data_source_id:
+            return JsonResponse({"error": "Missing 'data source'"}, status=400)
+
+        if request.method == "POST":
+            workspace = workspace_service.create_workspace(
+                name, data_source_id)
+            app.select_workspace(workspace.id)
+            return JsonResponse({"message": f"Created {workspace.name}"})
+        else:  # PUT
+            workspace_id = data.get("workspace_id")
+            if not workspace_id:
+                return JsonResponse({"error": "Missing 'workspace_id'"}, status=400)
+            workspace = workspace_service.update(
+                str(workspace_id), name, data_source_id)
+
+            if app.current_workspace_id == workspace.id:
+                app.graph_context.select_data_source(data_source_id)
+
+            return JsonResponse({"message": f"Updated {workspace.name}"})
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except KeyError:
+        return JsonResponse({"error": f"Workspace not found: {workspace_id}"}, status=400)
