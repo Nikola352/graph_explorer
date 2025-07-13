@@ -53,6 +53,9 @@
             target: nodes.find(n => n.id === link.target),
         }));
 
+        const handleZoom = (e) => g.attr('transform', e.transform);
+        const zoom = d3.zoom().on('zoom', handleZoom);
+
         d3.select('#svg-{{name}}').append('defs')
         .append('marker')
         .attr("id", "arrowhead")
@@ -66,7 +69,7 @@
         .attr("d", "M0,-5 L10,0 L0,5")
         .attr("fill", "#1a699e82");
 
-        var g = d3.select('#svg-{{name}}').append('g');
+        var g = d3.select('#svg-{{name}}').call(zoom).append('g');
 
         const link = g.selectAll(".link")
             .data(links).enter()
