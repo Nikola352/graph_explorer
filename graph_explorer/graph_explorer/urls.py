@@ -4,5 +4,6 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('filter/', views.filter_view, name='filter')
+    path('filter/', views.filter_view, name='filter'),
+    path('select-visualizer/', views.select_visualizer),
 ]
