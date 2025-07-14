@@ -29,7 +29,7 @@ class WorkspaceService(object):
         if not workspaces:
             self.create_workspace("Default Workspace")
 
-    def create_workspace(self, name: str) -> Workspace:
+    def create_workspace(self, name: str, data_source_id: str | None = None) -> Workspace:
         """
         Creates an empty workspace with the given name.
         
@@ -38,7 +38,7 @@ class WorkspaceService(object):
         :return: Newly created workspace
         :rtype: Workspace
         """
-        return self.repo.insert(Workspace("", name))
+        return self.repo.insert(Workspace("", name, data_source_id=data_source_id))
 
     def remove_workspace(self, id: str):
         """
@@ -72,7 +72,7 @@ class WorkspaceService(object):
         """
         return self.repo.get(id)
 
-    def set_name(self, workspace_id: str, name: str):
+    def update(self, workspace_id: str, name: str, data_source_id: str | None = None) -> Workspace:
         """
         Updates the name of a workspace.
 
@@ -88,7 +88,8 @@ class WorkspaceService(object):
         if workspace is None:
             raise KeyError
         workspace.name = name
-        self.repo.update(workspace)
+        workspace.data_source_id = data_source_id
+        return self.repo.update(workspace)
 
     def set_filters(self, workspace_id: str, filters: List):
         """

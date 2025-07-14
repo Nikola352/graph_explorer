@@ -8,21 +8,27 @@
       <p class="panel-heading">Workspaces</p>
       <ul class="menu-list">
         {% for workspace in workspaces %} 
-        <li class="workspace-row {% if workspace.id == current_workspace_id %}highlight{% endif %}">
-          <a class="workspace-name">{{ workspace.name }}</a> 
+        <li 
+          class="workspace-row {% if workspace.id == current_workspace_id %}highlight{% endif %}"
+          data-workspace-id="{{ workspace.id }}"
+        >
+          <a class="workspace-name" onclick="selectWorkspace({{ workspace.id }})">{{ workspace.name }}</a>
           <div class="icons-container">
             <!--Edit workspace-->
-            <a class="link-button">
+            <a 
+              class="link-button"
+              onclick='openWorkspaceForm({"id": {{ workspace.id }}, "name": "{{ workspace.name }}", "data_source": "{{ workspace.data_source_id }}"})'
+            >
               <span class="material-symbols-outlined">settings</span></a>
             <!--Delete workspace-->
-            <a class="link-button">
+            <a class="link-button" onclick="deleteWorkspace({{workspace.id}})">
               <span class="material-symbols-outlined">close</span></a>
           </div>
         </li>
         {% endfor %}
         <li>
           <!--Create workspace-->
-          <a id="create-workspace" class="row">
+          <a id="create-workspace" class="row" onclick="openWorkspaceForm()">
             Create a new workspace <span class="material-symbols-outlined">add_circle</span>
           </a>
         </li>
@@ -38,7 +44,7 @@
               {% include "tree_view.html" %}
             {% else %}
               <div class="vertical-container error-container">
-                <h2 class="error-no-content">No workspace selected</h2>
+                <h2 class="error-no-content">No data source selected</h2>
               </div>
             {% endif %}
           </div>
@@ -53,7 +59,7 @@
             {% include "bird_view.html" %}
           {% else %}
             <div class="vertical-container error-container">
-              <h2 class="error-no-content">No workspace selected</h2>
+              <h2 class="error-no-content">No data source selected</h2>
             </div>
           {% endif %}
         </div>
@@ -67,9 +73,14 @@
           <p class="panel-heading">Visualizer</p>
           <div class="panel-block">
             <div class="select">
-              <select id="visualizer-select">
+              <select id="visualizer-select" onchange="selectVisualizer(this.value)">
                 {% for visualizer in visualizers %}
-                  <option value="{{ visualizer.name }}" {% if visualizer.name == current_visualizer %}selected{% endif %}>{{ visualizer.name }}</option>
+                  <option 
+                    value="{{ visualizer.identifier }}" 
+                    {% if visualizer.identifier == selected_visualizer %}selected{% endif %}
+                  >
+                    {{ visualizer.name }}
+                  </option>
                 {% endfor %}
               </select>
             </div>
@@ -152,7 +163,7 @@
             {{ graph_html | safe }}
           {% else %}
             <div class="vertical-container error-container">
-              <h2 class="error-no-content">No workspace selected</h2>
+              <h2 class="error-no-content">No data source selected</h2>
             </div>
           {% endif %}
         </div>

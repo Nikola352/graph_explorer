@@ -63,7 +63,7 @@ class WorkspaceRepository(object):
         workspace.id = str(doc_id)
         return workspace
 
-    def update(self, workspace: Workspace):
+    def update(self, workspace: Workspace) -> Workspace:
         """
         Updates an existing workspace in the database.
 
@@ -71,6 +71,7 @@ class WorkspaceRepository(object):
         :type workspace: Workspace
         """
         self.db.update(workspace.to_dict(), doc_ids=[int(workspace.id)])
+        return workspace
 
     def delete(self, id: str):
         """

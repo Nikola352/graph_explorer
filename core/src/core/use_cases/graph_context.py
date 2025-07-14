@@ -81,8 +81,6 @@ class GraphContext(object):
         :return: Dictionary containing:
             - selected_data_source: ID of current data source
             - selected_visualizer: ID of current visualizer
-            - datasources: Available data sources
-            - visualizers: Available visualizers
             - graph_html: Rendered graph HTML
         :rtype: dict
         """
@@ -95,8 +93,6 @@ class GraphContext(object):
         return {
             "selected_data_source": self._selected_data_source.identifier() if self._selected_data_source else None,
             "selected_visualizer": self._selected_visualizer.identifier() if self._selected_visualizer else None,
-            "datasources": self.data_source_plugins.values(),
-            "visualizers": self.visualizer_plugins.values(),
             "graph_html": graph_html
         }
 
