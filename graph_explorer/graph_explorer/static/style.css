@@ -226,6 +226,15 @@ a#create-workspace .material-symbols-outlined {
   color: red;
 }
 
+.modal-card-head {
+  background-color: #1a699e;
+}
+
+.modal-card-head .modal-card-title {
+  color: white;
+  font: bold;
+}
+
 @-webkit-keyframes fadein {
   from {
     bottom: 0;

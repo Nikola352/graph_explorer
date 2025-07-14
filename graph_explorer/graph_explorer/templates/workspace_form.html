@@ -1,0 +1,46 @@
+<div id="workspace-form-modal" class="modal is-active">
+  <div class="modal-background" onclick="closeWorkspaceForm()"></div>
+
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title" id="workspace-form-title">Create/Edit Workspace</p>
+      <button class="delete" aria-label="close" onclick="closeWorkspaceForm()"></button>
+    </header>
+
+    
+    <form id="workspace-form" action="{% url 'save-workspace' %}">
+    {% csrf_token %}
+
+      <section class="modal-card-body">
+        <div class="field">
+          <label class="label">Workspace Name</label>
+          <div class="control">
+          <input class="input" type="text" name="name" id="workspace-name-input" placeholder="Enter workspace name" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Data Source</label>
+          <div class="control">
+            <div class="select">
+              <select name="data_source" id="workspace-datasource-select" required>
+              <option value="" disabled selected>Select data source</option>
+              {% for datasource in data_sources %}
+              <option value="{{ datasource.identifier }}">{{ datasource.name }}</option>
+              {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <input type="hidden" id="workspace-id-input" name="workspace_id" value="" />
+      </section>
+
+      <footer class="modal-card-foot">
+        <button type="submit" class="button is-success">Save</button>
+        <button type="button" class="button" onclick="closeWorkspaceForm()">Cancel</button>
+      </footer>
+    </form>
+    
+  </div>
+</div>

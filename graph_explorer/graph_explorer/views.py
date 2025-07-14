@@ -1,7 +1,8 @@
 import json
 
 from django.apps import apps
-from django.http import HttpRequest, JsonResponse
+from django.http import (HttpRequest, HttpResponse, HttpResponseNotAllowed,
+                         JsonResponse)
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
@@ -53,3 +54,108 @@ def filter_view(request: HttpRequest):
             return JsonResponse({"error": str(e)}, status=422)
 
     return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+
+def select_visualizer(request: HttpRequest) -> HttpResponse:
+    if request.method != "POST":
+        return HttpResponseNotAllowed(['POST'])
+
+    graph_context: GraphContext = apps.get_app_config(
+        'graph_explorer').graph_context  # type: ignore
+
+    try:
+        data = json.loads(request.body)
+        visualizer_id = data.get("visualizer_id")
+        if visualizer_id is None:
+            return JsonResponse({"error": "Missing 'visualizer_id'"}, status=400)
+
+        graph_context.select_visualizer(visualizer_id)
+
+        return redirect('index')
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except KeyError:
+        return JsonResponse({"error": f"Visualizer not found: {visualizer_id}"}, status=400)
+
+
+def select_workspace(request: HttpRequest) -> HttpResponse:
+    if request.method != "POST":
+        return HttpResponseNotAllowed(['POST'])
+
+    app: Application = apps.get_app_config(
+        'graph_explorer').core_app  # type: ignore
+
+    try:
+        data = json.loads(request.body)
+        workspace_id = data.get("workspace_id")
+        if workspace_id is None:
+            return JsonResponse({"error": "Missing 'workspace_id'"}, status=400)
+
+        workspace = app.select_workspace(str(workspace_id))
+
+        return JsonResponse({"message": f"Selected {workspace.name}"})
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except KeyError:
+        return JsonResponse({"error": f"Workspace not found: {workspace_id}"}, status=400)
+
+
+def workspace_form(request: HttpRequest) -> HttpResponse:
+    app: Application = apps.get_app_config(
+        'graph_explorer').core_app  # type: ignore
+    return render(request, "workspace_form.html", app.get_context())
+
+
+def save_workspace(request: HttpRequest) -> HttpResponse:
+    if request.method not in ["POST", "PUT"]:
+        return HttpResponseNotAllowed(["POST", "PUT"])
+
+    workspace_service: WorkspaceService = apps.get_app_config(
+        'graph_explorer').workspace_service  # type: ignore
+
+    app: Application = apps.get_app_config(
+        'graph_explorer').core_app  # type: ignore
+
+    try:
+        data = json.loads(request.body)
+        name, data_source_id = data.get("name"), data.get("data_source_id")
+        if not name:
+            return JsonResponse({"error": "Missing 'name'"}, status=400)
+        if not data_source_id:
+            return JsonResponse({"error": "Missing 'data source'"}, status=400)
+
+        if request.method == "POST":
+            workspace = workspace_service.create_workspace(
+                name, data_source_id)
+            app.select_workspace(workspace.id)
+            return JsonResponse({"message": f"Created {workspace.name}"})
+        else:  # PUT
+            workspace_id = data.get("workspace_id")
+            if not workspace_id:
+                return JsonResponse({"error": "Missing 'workspace_id'"}, status=400)
+            workspace = workspace_service.update(
+                str(workspace_id), name, data_source_id)
+
+            if app.current_workspace_id == workspace.id:
+                app.graph_context.select_data_source(data_source_id)
+
+            return JsonResponse({"message": f"Updated {workspace.name}"})
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except KeyError:
+        return JsonResponse({"error": f"Workspace not found: {workspace_id}"}, status=400)
+
+
+def delete_workspace(request: HttpRequest, workspace_id: str) -> HttpResponse:
+    if request.method != "DELETE":
+        return HttpResponseNotAllowed(['DELETE'])
+
+    workspace_service: WorkspaceService = apps.get_app_config(
+        'graph_explorer').workspace_service  # type: ignore
+
+    try:
+        workspace_service.remove_workspace(workspace_id)
+        return JsonResponse({"message": f"Successfully removed the workspace"})
+    except KeyError:
+        return JsonResponse({"error": f"Workspace not found: {workspace_id}"}, status=400)

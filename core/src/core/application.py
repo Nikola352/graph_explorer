@@ -1,7 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from core.models.filterOperator import FilterOperator
 from core.config.application_config import ApplicationConfig, load_app_config
+from core.models.filterOperator import FilterOperator
+from core.models.workspace import Workspace
 from core.repositories.graph_repository import GraphRepository
 from core.repositories.workspace_repository import WorkspaceRepository
 from core.use_cases.graph_context import GraphContext
@@ -58,6 +59,8 @@ class Application(object):
         :return: A dictionary containing:
             - current_workspace_id: ID of the active workspace
             - workspaces: List of all available workspaces
+            - data_sources: Available data sources
+            - visualizers: Available visualizers
             - all the keys from the current graph context
         :rtype: dict[str, Any]
         """
@@ -65,10 +68,12 @@ class Application(object):
             "current_workspace_id": self.current_workspace_id,
             "workspaces": self.workspace_service.get_workspaces(),
             "operators": FilterOperator.choices(),
+            "data_sources": self.data_source_plugins,
+            "visualizers": self.visualizer_plugins,
             **self.graph_context.get_context()
         }
 
-    def select_workspace(self, workspace_id: str):
+    def select_workspace(self, workspace_id: str) -> Workspace:
         """
         Changes the active workspace to the specified workspace.
 
@@ -87,3 +92,4 @@ class Application(object):
             self.workspace_service,
             self.graph_repository,
         )
+        return workspace
