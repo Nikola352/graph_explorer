@@ -14,12 +14,14 @@ class Workspace(object):
                  data_source_id: str | None = None,
                  visualizer_id: str | None = None,
                  filters: List[Filter] = [],
+                 data_source_config: dict = {},
                  ):
         self.id = id
         self.name = name
         self.data_source_id = data_source_id
         self.visualizer_id = visualizer_id
         self.filters = filters
+        self.data_source_config = data_source_config
 
     def to_dict(self) -> dict:
         return {
@@ -28,6 +30,7 @@ class Workspace(object):
             "data_source_id": self.data_source_id,
             "visualizer_id": self.visualizer_id,
             "filters": [f.to_dict() for f in self.filters],
+            "data_source_config": self.data_source_config,
         }
 
     @classmethod
@@ -37,6 +40,7 @@ class Workspace(object):
             name=data['name'],
             data_source_id=data.get('data_source_id'),
             visualizer_id=data.get('visualizer_id'),
-            filters=[Filter.from_dict(f) for f in data.get('filters', [])]
+            filters=[Filter.from_dict(f) for f in data.get('filters', [])],
+            data_source_config=data.get('data_source_config', {})
         )
         return workspace

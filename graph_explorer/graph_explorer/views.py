@@ -120,6 +120,7 @@ def save_workspace(request: HttpRequest) -> HttpResponse:
     try:
         data = json.loads(request.body)
         name, data_source_id = data.get("name"), data.get("data_source_id")
+        config = data.get('config', {})
         if not name:
             return JsonResponse({"error": "Missing 'name'"}, status=400)
         if not data_source_id:
@@ -127,7 +128,7 @@ def save_workspace(request: HttpRequest) -> HttpResponse:
 
         if request.method == "POST":
             workspace = workspace_service.create_workspace(
-                name, data_source_id)
+                name, data_source_id, config)
             app.select_workspace(workspace.id)
             return JsonResponse({"message": f"Created {workspace.name}"})
         else:  # PUT
@@ -135,10 +136,11 @@ def save_workspace(request: HttpRequest) -> HttpResponse:
             if not workspace_id:
                 return JsonResponse({"error": "Missing 'workspace_id'"}, status=400)
             workspace = workspace_service.update(
-                str(workspace_id), name, data_source_id)
+                str(workspace_id), name, data_source_id, config)
 
             if app.current_workspace_id == workspace.id:
                 app.graph_context.select_data_source(data_source_id)
+                app.graph_context.set_data_source_config(config)
 
             return JsonResponse({"message": f"Updated {workspace.name}"})
 
@@ -160,6 +162,7 @@ def delete_workspace(request: HttpRequest, workspace_id: str) -> HttpResponse:
         return JsonResponse({"message": f"Successfully removed the workspace"})
     except KeyError:
         return JsonResponse({"error": f"Workspace not found: {workspace_id}"}, status=400)
+
 
 
 @csrf_protect
@@ -214,3 +217,22 @@ def remove_search(request: HttpRequest):
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
     return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+def data_source_config(request: HttpRequest) -> HttpResponse:
+    if request.method != "GET":
+        return HttpResponseNotAllowed(['GET'])
+
+    data_source_id = request.GET.get('data_source_id')
+    if not data_source_id:
+        return JsonResponse({"error": "Missing 'data_source_id'"}, status=400)
+
+    app: Application = apps.get_app_config(
+        'graph_explorer').core_app  # type: ignore
+
+    params = app.get_data_source_config_params(data_source_id)
+    param_dicts = []
+    for param in params:
+        param_dicts.append(param.to_dict())
+
+    return JsonResponse({"params": param_dicts})
+

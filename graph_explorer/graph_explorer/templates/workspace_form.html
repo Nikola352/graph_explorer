@@ -15,24 +15,31 @@
         <div class="field">
           <label class="label">Workspace Name</label>
           <div class="control">
-          <input class="input" type="text" name="name" id="workspace-name-input" placeholder="Enter workspace name" required />
+            <input class="input" type="text" name="name" id="workspace-name-input" placeholder="Enter workspace name" required />
           </div>
         </div>
-
+        
         <div class="field">
           <label class="label">Data Source</label>
           <div class="control">
             <div class="select">
               <select name="data_source" id="workspace-datasource-select" required>
-              <option value="" disabled selected>Select data source</option>
-              {% for datasource in data_sources %}
-              <option value="{{ datasource.identifier }}">{{ datasource.name }}</option>
-              {% endfor %}
+                <option value="" disabled selected>Select data source</option>
+                {% for data_source in data_sources %}
+                <option value="{{ data_source.identifier }}">{{ data_source.name }}</option>
+                {% endfor %}
               </select>
             </div>
           </div>
         </div>
 
+        <!-- Dynamic configuration parameters container -->
+        <div id="datasource-config-container" style="display: none;">
+          <hr class="my-4">
+          <h4 class="title is-5">Data Source Configuration</h4>
+          <div id="datasource-config-fields"></div>
+        </div>
+        
         <input type="hidden" id="workspace-id-input" name="workspace_id" value="" />
       </section>
 

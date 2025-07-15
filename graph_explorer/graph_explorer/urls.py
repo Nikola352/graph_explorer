@@ -13,4 +13,6 @@ urlpatterns = [
     path('search/', views.search_view, name='search'),
     path('remove-filter/', views.remove_filter, name='remove-filter'),
     path('remove-search/', views.remove_search, name='remove-search')
+    path('data-source-config', views.data_source_config),
+
 ]
