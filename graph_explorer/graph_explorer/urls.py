@@ -10,4 +10,7 @@ urlpatterns = [
     path('workspace-form/', views.workspace_form),
     path('save-workspace/', views.save_workspace, name='save-workspace'),
     path('delete-workspace/<str:workspace_id>/', views.delete_workspace),
+    path('search/', views.search_view, name='search'),
+    path('remove-filter/', views.remove_filter, name='remove-filter'),
+    path('remove-search/', views.remove_search, name='remove-search')
 ]
