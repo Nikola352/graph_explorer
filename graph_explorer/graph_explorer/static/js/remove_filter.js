@@ -1,0 +1,63 @@
+function removeFilter(field, operator, value) {
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  fetch("/remove-filter/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken,
+    },
+    body: JSON.stringify({
+        field,
+        operator,
+        value
+    })
+  })
+  .then((response) => {
+    if (!response.ok){
+        return response
+          .json()
+          .then((errData) => {
+            console.error("Error:", errData.error || "Server error");
+          })
+          .catch((err) => {
+            console.error("Error:", err.error || "Server error");
+          });
+    }
+    location.reload()
+  })
+  .catch((error) => {
+    console.log("Error:",  error)
+  })
+}
+
+function removeSearch(search_term) {
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  fetch("/remove-search/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken,
+    },
+    body: JSON.stringify({
+        search_term
+    })
+  })
+  .then((response) => {
+    if (!response.ok){
+        return response
+          .json()
+          .then((errData) => {
+            console.error("Error:", errData.error || "Server error");
+          })
+          .catch((err) => {
+            console.error("Error:", err.error || "Server error");
+          });
+    }
+    location.reload()
+  })
+  .catch((error) => {
+    console.log("Error:",  error)
+  })
+}

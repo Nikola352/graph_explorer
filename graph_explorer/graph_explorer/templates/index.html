@@ -91,7 +91,7 @@
           <p class="panel-heading">Search and filter</p>
           <div class="panel-block">
             {% if active_ws_id != -1 %}
-            <form class="filter-form">
+            <form class="filter-form" action="{% url 'search' %}" id="search-form">
               {% csrf_token %}
               <input id="search-input" class="input" type="text" placeholder="Search" name="query" />
               <input type="submit" value="Search" class="button" />
@@ -100,7 +100,7 @@
             <div class="filter-form">
               {% csrf_token %}
               <input id="search-input" class="input" type="text" placeholder="Search" name="query" />
-              <input type="submit" value="Search" class="button" />
+              <!-- <input type="submit" value="Search" class="button" /> -->
             </div>
             {% endif %}
           </div>
@@ -118,7 +118,7 @@
                 </select>
               </div>
               <input name="value" id="filter-value-input" class="input" type="text" placeholder="Value" />
-              <input type="submit" value="Filteric" class="button" />
+              <input type="submit" value="Filter" class="button" />
             </form>
             {% else %}
             <div id="filter-form" class="filter-form">
@@ -142,14 +142,27 @@
               <span>Active filters:</span>
               {% for filter in filters %}
               <div class="filter">
-                {% if filter.type == 'search' %}
-                {{ filter.search_term }}
-                {% elif filter.type == 'filter' %}
-                {{ filter.attribute }} {{ filter.operator }} {{ filter.value }}
-                {% endif %}
-                <span class="material-symbols-outlined remove">remove</span>
+                <h5>{{ filter.field }} {{ filter.operator }} {{ filter.value }}</h5>
+                <button class="material-symbols-outlined remove" id="remove-filter" 
+                  data-field="{{ filter.field }}"
+                  data-operator="{{ filter.operator }}"
+                  data-value="{{ filter.value }}"
+                  onclick="removeFilter('{{filter.field}}', '{{ filter.operator }}', '{{filter.value}}')"
+                  >
+                  Remove
+                </button>
               </div>
               {% endfor %}
+              {% if search_term %}
+              <div class="filter">
+                <h5>{{ search_term }}</h5>
+                <button class="material-symbols-outlined remove" id="remove-filter" 
+                  onclick="removeSearch('{{search_term}}')"
+                  >
+                  Remove
+                </button>
+              </div>
+              {% endif %}
             </div>
           </div>
         </nav>
