@@ -94,7 +94,7 @@
             <form class="filter-form" action="{% url 'search' %}" id="search-form">
               {% csrf_token %}
               <input id="search-input" class="input" type="text" placeholder="Search" name="query" />
-              <input type="submit" value="Searchk" class="button" />
+              <input type="submit" value="Search" class="button" />
             </form>
             {% else %}
             <div class="filter-form">
@@ -118,7 +118,7 @@
                 </select>
               </div>
               <input name="value" id="filter-value-input" class="input" type="text" placeholder="Value" />
-              <input type="submit" value="Filteric" class="button" />
+              <input type="submit" value="Filter" class="button" />
             </form>
             {% else %}
             <div id="filter-form" class="filter-form">
