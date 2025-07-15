@@ -81,7 +81,7 @@ a#create-workspace .material-symbols-outlined {
     color: white;
 }
 
-.panel-block .filter-form {
+.panel-block .filter-form, .search-form {
   width: 100%;
 }
 

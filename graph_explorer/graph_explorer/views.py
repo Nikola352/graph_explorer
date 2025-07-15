@@ -4,7 +4,7 @@ from django.apps import apps
 from django.http import (HttpRequest, HttpResponse, HttpResponseNotAllowed,
                          JsonResponse)
 from django.shortcuts import redirect, render
-from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.views.decorators.csrf import csrf_protect
 
 from core.application import Application
 from core.models.filter import Filter, FilterOperator
@@ -27,6 +27,7 @@ def index(request):
     current_workspace = next(
         (w for w in context["workspaces"] if w.id == context["current_workspace_id"]), None)
     context["filters"] = current_workspace.filters if current_workspace else [""]
+    context["search_term"] = graph_context.search_term if graph_context.search_term else ""
     return render(request, "index.html", context)
 
 
@@ -159,3 +160,57 @@ def delete_workspace(request: HttpRequest, workspace_id: str) -> HttpResponse:
         return JsonResponse({"message": f"Successfully removed the workspace"})
     except KeyError:
         return JsonResponse({"error": f"Workspace not found: {workspace_id}"}, status=400)
+
+
+@csrf_protect
+def search_view(request: HttpRequest):
+    graph_context: GraphContext = apps.get_app_config(
+        'graph_explorer').graph_context  # type: ignore
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            attribute = data.get("query")
+            if attribute == None:
+                raise ValueError("Query are required!")
+            graph_context.search_term = attribute
+            return redirect('index')
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+    return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+
+def remove_filter(request: HttpRequest):
+    graph_context: GraphContext = apps.get_app_config(
+        'graph_explorer').graph_context  # type: ignore
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            field = data.get("field")
+            operator = data.get("operator")
+            value = data.get("value")
+            if not field or not operator or not value:
+                raise ValueError("Fields are required!")
+            choises = FilterOperator.choices()
+
+            filter = Filter(field, FilterOperator(choises[operator]), value)
+            graph_context.remove_filter(filter)
+            return redirect('index')
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+    return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+
+def remove_search(request: HttpRequest):
+    graph_context: GraphContext = apps.get_app_config(
+        'graph_explorer').graph_context  # type: ignore
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            search_term = data.get("search_term")
+            if not search_term:
+                raise ValueError("Fields are required!")
+            graph_context.search_term = ""
+            return redirect('index')
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+    return JsonResponse({"error": "Only POST allowed"}, status=405)
