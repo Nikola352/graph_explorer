@@ -61,7 +61,7 @@ class GraphRepository(object):
         with self.driver.session() as session:
             session.execute_write(self._save_graph, id, graph)
 
-    def query_graph(self, id: str, filters: List[Filter]) -> Graph:
+    def query_graph(self, id: str, filters: List[Filter], search_term: str = "") -> Graph:
         """
         Retrieves a graph from the database by its ID, optionally applying filters.
 
@@ -90,8 +90,10 @@ class GraphRepository(object):
             result = session.run(metadata_query, graph_id=id)
             directed, root_id = self._parse_metadata(result)
 
-            n_where_clause, params = self._build_where_clause(filters, "", "n")
-            m_where_clause, params = self._build_where_clause(filters, "", "m")
+            n_where_clause, params = self._build_where_clause(
+                filters, search_term, "n")
+            m_where_clause, params = self._build_where_clause(
+                filters, search_term, "m")
             query = cast(Query, graph_query
                          .replace("{n_where_clause}", n_where_clause)
                          .replace("{m_where_clause}", m_where_clause)
@@ -194,7 +196,7 @@ class GraphRepository(object):
                 search_term, node_name)
             clauses.append(search_clause)
             params.update(search_params)
-        clause_str = " AND ".join(clauses)
+        clause_str = " AND ".join([c for c in clauses if c.strip()])
         return "WHERE " + clause_str if clause_str else "", params
 
     @staticmethod
@@ -220,6 +222,7 @@ class GraphRepository(object):
     @staticmethod
     def _build_search_clause(search_term: str, node_name: str) -> Tuple[str, Dict]:
         search_term_key = "search_term"
-        clause = f"ANY(prop IN keys({node_name}) WHERE {node_name}[prop] =~ '(?i).*${search_term_key}.*')"
-        params = {search_term_key: search_term}
+        regex = f"(?i).*{search_term}.*"
+        clause = f"ANY(prop IN keys({node_name}) WHERE {node_name}[prop] =~ ${search_term_key})"
+        params = {search_term_key: regex}
         return clause, params
