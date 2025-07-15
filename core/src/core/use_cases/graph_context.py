@@ -73,6 +73,7 @@ class GraphContext(object):
             self._selected_visualizer = visualizer_plugins[0]
 
         self.filters: List[Filter] = workspace.filters
+        self.search_term: str = ""
 
     def get_context(self) -> dict:
         """
@@ -87,7 +88,7 @@ class GraphContext(object):
         graph_html = ""
         if self._selected_data_source is not None and self._selected_visualizer is not None:
             graph = self._graph_repository.query_graph(
-                self._workspace_id, self.filters)
+                self._workspace_id, self.filters, self.search_term)
             graph_html = self._selected_visualizer.display(graph)
 
         return {
