@@ -59,6 +59,7 @@ class GraphContext(object):
             p.identifier(): p for p in visualizer_plugins}
 
         self._workspace_id = workspace.id
+        self._data_source_config = workspace.data_source_config
 
         if workspace.data_source_id and workspace.data_source_id in self.data_source_plugins:
             self._selected_data_source = self.data_source_plugins[workspace.data_source_id]
@@ -117,7 +118,7 @@ class GraphContext(object):
         """
         if self._selected_data_source is None:
             raise KeyError("No data source selected")
-        graph = self._selected_data_source.load()
+        graph = self._selected_data_source.load(**self._data_source_config)
         self._graph_repository.save_graph(self._workspace_id, graph)
 
     def select_visualizer(self, visualizer_id: str):
@@ -139,3 +140,6 @@ class GraphContext(object):
     def remove_filter(self, filter: Filter):
         self.filters = [f for f in self.filters if f != filter]
         self._workspace_service.set_filters(self._workspace_id, self.filters)
+
+    def set_data_source_config(self, config: dict):
+        self._data_source_config = config

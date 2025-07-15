@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+from api.components.data_source import DataSourceConfigParam
 from core.config.application_config import ApplicationConfig, load_app_config
 from core.models.filterOperator import FilterOperator
 from core.models.workspace import Workspace
@@ -93,3 +94,18 @@ class Application(object):
             self.graph_repository,
         )
         return workspace
+
+    def get_data_source_config_params(self, data_source_id: str) -> List[DataSourceConfigParam]:
+        """
+        Get the available configuration options for a given data source plugin.
+
+        :param data_source_id: The ID of the data source.
+        :type data_source_id: str
+        :return: A list of available configuration parameters. An empty list if the data source is not found.
+        :rtype: List[DataSourceConfigParam]
+        """
+        data_source = next(
+            (ds for ds in self.data_source_plugins if ds.identifier() == data_source_id), None)
+        if not data_source:
+            return []
+        return data_source.get_configuration_parameters()
