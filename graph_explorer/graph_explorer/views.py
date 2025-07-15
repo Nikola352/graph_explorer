@@ -47,6 +47,9 @@ def filter_view(request: HttpRequest):
                 raise ValueError("Fields are required!")
             new_filter = Filter(
                 attribute, operator=FilterOperator(operator), value=value)
+            # if the same filter is already there return error
+            if new_filter in graph_context.filters:
+                raise ValueError("Filter already exists!")
             graph_context.add_filter(new_filter)
             return redirect('index')
         except json.JSONDecodeError:
@@ -164,7 +167,6 @@ def delete_workspace(request: HttpRequest, workspace_id: str) -> HttpResponse:
         return JsonResponse({"error": f"Workspace not found: {workspace_id}"}, status=400)
 
 
-
 @csrf_protect
 def search_view(request: HttpRequest):
     graph_context: GraphContext = apps.get_app_config(
@@ -218,6 +220,7 @@ def remove_search(request: HttpRequest):
             return JsonResponse({"error": "Invalid JSON"}, status=400)
     return JsonResponse({"error": "Only POST allowed"}, status=405)
 
+
 def data_source_config(request: HttpRequest) -> HttpResponse:
     if request.method != "GET":
         return HttpResponseNotAllowed(['GET'])
@@ -235,4 +238,3 @@ def data_source_config(request: HttpRequest) -> HttpResponse:
         param_dicts.append(param.to_dict())
 
     return JsonResponse({"params": param_dicts})
-

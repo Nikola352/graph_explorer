@@ -29,9 +29,18 @@ function handleFilterSubmit(e){
         value: value,
       })
     })
-      .then(response => response.text())
-      .then(data => {
-        console.log("Server responded with:", data);
+      .then(response => {
+        if (!response.ok){
+          return response
+          .json()
+          .then((errData) => {
+            console.error("Error:", errData.error || "Server error");
+          })
+          .catch((err) => {
+            console.error("Error:", err.error || "Server error");
+          });
+        }
+        // console.log("Server responded with:", data);
         window.location.reload()
       })
       .catch(error => {
