@@ -38,8 +38,8 @@ def process_artists(auth_token: str, artist: Artist, max_neighbours: int,
         related_artists = related_artists[:max_neighbours]
 
     for related_artist in related_artists:
-        src_node = Node(artist.id, vars(artist))
-        target_node = Node(related_artist.id, vars(related_artist))
+        src_node = Node(artist.name, vars(artist))
+        target_node = Node(related_artist.name, vars(related_artist))
         edge = Edge({"connection": "related"}, src_node, target_node)
         graph.add_edge(edge)
         process_artists(auth_token, related_artist, max_neighbours,
