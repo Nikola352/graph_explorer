@@ -124,6 +124,10 @@ function displayDataSourceConfiguration(params, existingConfig = {}) {
 function hideDataSourceConfiguration() {
   const container = document.getElementById("datasource-config-container");
   if (container) {
+    const inputs = container.querySelectorAll("input");
+    inputs.forEach(input => {
+      input.removeAttribute("required");
+    });
     container.style.display = "none";
   }
 }
