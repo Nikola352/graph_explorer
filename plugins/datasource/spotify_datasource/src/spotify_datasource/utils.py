@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 def get_auth_token() -> str:
 
     load_dotenv()
-    print(os.getenv("SPOTIFY_CLIENT_ID"))
 
     client_id = os.getenv("SPOTIFY_CLIENT_ID")
     client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
