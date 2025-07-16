@@ -142,8 +142,8 @@ def save_workspace(request: HttpRequest) -> HttpResponse:
                 str(workspace_id), name, data_source_id, config)
 
             if app.current_workspace_id == workspace.id:
-                app.graph_context.select_data_source(data_source_id)
                 app.graph_context.set_data_source_config(config)
+                app.graph_context.select_data_source(data_source_id)
 
             return JsonResponse({"message": f"Updated {workspace.name}"})
 
