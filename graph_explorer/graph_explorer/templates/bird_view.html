@@ -12,5 +12,37 @@
 </style>
 <div id="bird-view-content">
     <svg id="bird-view-svg">
+        <g id="main-content-group"></g>
     </svg>
 </div>
+<script>
+
+    let isGraphLoaded = false;
+    const configuration = { attributes: true, childList: true, subtree: true };
+    const graphObserver = new MutationObserver( () => {
+        if(!isGraphLoaded){
+            renderNewBirdView();
+        }
+    });
+
+    window.onload = () => {
+        let mainViewGraphSvg = d3.select("#main-view-graph>svg");
+        const target = mainViewGraphSvg.node();
+        graphObserver.observe(target, configuration);
+    }
+
+    function renderNewBirdView(){
+        isGraphLoaded = true;
+        let mainViewGraphSvg = d3.select("#main-view-graph>svg");
+        let mainViewGraphSvgHtml = mainViewGraphSvg.html();
+
+        mainViewGraphSvg.select("#main-svg-border").remove();
+
+        let mainContentGroup = d3.select("#main-content-group");
+        mainContentGroup.html("");
+        let gContentWrapper = mainContentGroup.append("g").attr("class", "content-wrapper");
+        gContentWrapper.html(mainViewGraphSvgHtml);
+
+        setTimeout(function() { isGraphLoaded = false; }, 100);
+    }
+</script>
