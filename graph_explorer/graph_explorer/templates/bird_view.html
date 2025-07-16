@@ -36,12 +36,25 @@
         let mainViewGraphSvg = d3.select("#main-view-graph>svg");
         let mainViewGraphSvgHtml = mainViewGraphSvg.html();
 
-        mainViewGraphSvg.select("#main-svg-border").remove();
+        mainViewGraphSvg.select("#bird-view-border").remove();
 
         let mainContentGroup = d3.select("#main-content-group");
         mainContentGroup.html("");
         let gContentWrapper = mainContentGroup.append("g").attr("class", "content-wrapper");
         gContentWrapper.html(mainViewGraphSvgHtml);
+
+        let width = mainViewGraphSvg.node().clientWidth;
+        let height = mainViewGraphSvg.node().clientHeight;
+        let extension = 5;
+        mainViewGraphSvg.append("rect")
+            .attr("x", -extension / 2)
+            .attr("y", -extension / 2)
+            .attr("width", width + extension)
+            .attr("height", height + extension)
+            .attr("id", "bird-view-border")
+            .attr("fill", "none")
+            .attr("stroke-width", 5)
+            .attr("stroke", "red");
 
         let birdViewSvg = d3.select("#bird-view-svg");
         let birdViewHeight = birdViewSvg.node().clientHeight;
