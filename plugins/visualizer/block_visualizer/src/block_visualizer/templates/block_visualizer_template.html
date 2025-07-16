@@ -1,0 +1,199 @@
+
+    <style>
+        .node {
+            cursor: pointer;
+        }
+
+        .link {
+            stroke: #1a699e82;
+            stroke-width: 1.5px;
+            fill: none;
+        }
+
+        #svg-{{ name }} {
+            width: 100%;
+            height: 100vh;
+        }
+
+        .tooltip {
+            font-family: sans-serif;
+            font-size: 12px;
+            pointer-events: none;
+            position: absolute;
+            line-height: 1.2;
+            z-index: 10;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 6px;
+            border-radius: 4px;
+            opacity: 0;
+        }
+    </style>
+
+<svg id="svg-{{ name }}"></svg>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+function render() {
+    const nodes = [
+        {% for n in nodes %}
+        {
+            id: "ID:{{ n.id }}",
+            data: {{ n.data | tojson }}
+        },
+        {% endfor %}
+    ];
+
+    const links = [
+        {% for e in edges %}
+        {
+            source: "ID:{{ e.src.id }}",
+            target: "ID:{{ e.target.id }}",
+            data: {{ e.data | tojson }}
+        },
+        {% endfor %}
+    ];
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const svg = d3.select("#svg-{{ name }}");
+    const g = svg.append("g");
+
+    svg.call(d3.zoom().on("zoom", (e) => {
+        g.attr("transform", e.transform);
+    }));
+
+    {% if directed %}
+    svg.append('defs')
+        .append('marker')
+        .attr("id", "arrowhead")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 90)
+        .attr("refY", 0)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M0,-5L10,0L0,5")
+        .attr("fill", "#1a699e82");
+    {% endif %}
+
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(220))
+        .force("charge", d3.forceManyBody().strength(-400))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    const link = g.selectAll(".link")
+        .data(links)
+        .enter()
+        .append("path")
+        .attr("class", "link")
+        {% if directed %}
+        .attr("marker-end", "url(#arrowhead)")
+        {% endif %};
+
+    const node = g.selectAll(".node")
+        .data(nodes)
+        .enter()
+        .append("g")
+        .attr("class", "node")
+        .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        );
+
+    const rectWidth = 160;
+    const lineHeight = 18;
+
+    node.each(function(d) {
+        const group = d3.select(this);
+        const name = d.data?.name || d.id;
+        const attrs = d.data?.attributes || [];
+        const methods = d.data?.methods || [];
+
+        const height = (1 + attrs.length + methods.length) * lineHeight;
+
+        group.append("rect")
+            .attr("x", -rectWidth/2)
+            .attr("y", -height/2)
+            .attr("width", rectWidth)
+            .attr("height", height)
+            .attr("stroke", "#04446fff")
+            .attr("fill", "white")
+            .attr("stroke-width", "1.5");
+
+        group.append("text")
+            .attr("y", -height/2 + lineHeight)
+            .attr("text-anchor", "middle")
+            .attr("font-weight", "bold")
+            .attr("fill", "#1a699e")
+            .text(name);
+
+        attrs.forEach((attr, i) => {
+            group.append("text")
+                .attr("x", -rectWidth/2 + 5)
+                .attr("y", -height/2 + lineHeight * (2 + i))
+                .attr("font-size", "12px")
+                .text(attr);
+        });
+
+        methods.forEach((method, i) => {
+            group.append("text")
+                .attr("x", -rectWidth/2 + 5)
+                .attr("y", -height/2 + lineHeight * (2 + attrs.length + i))
+                .attr("font-size", "12px")
+                .text(method);
+        });
+    });
+
+    const tooltip = d3.select("body").append("div").attr("class", "tooltip");
+
+    node.on("mouseover", (event, d) => {
+        tooltip.transition().duration(200).style("opacity", 0.9);
+        tooltip.html(`
+            <strong>${d.data.name || d.id}</strong><br/>
+            Attributes: ${d.data.attributes?.join(", ") || "None"}<br/>
+            Methods: ${d.data.methods?.join(", ") || "None"}
+        `)
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY + 10) + "px");
+    }).on("mousemove", (event) => {
+        tooltip.style("left", (event.pageX + 10) + "px")
+               .style("top", (event.pageY + 10) + "px");
+    }).on("mouseout", () => {
+        tooltip.transition().duration(500).style("opacity", 0);
+    });
+
+    simulation.on("tick", () => {
+        link.attr("d", d => {
+            const sx = d.source.x;
+            const sy = d.source.y;
+            const tx = d.target.x;
+            const ty = d.target.y;
+            return `M${sx},${sy} L${tx},${ty}`;
+        });
+
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+
+    function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+}
+render();
+</script>

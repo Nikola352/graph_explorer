@@ -30,11 +30,11 @@ def load_app_config() -> ApplicationConfig:
     """
 
     load_dotenv()
-
+    
     return ApplicationConfig(
         workspace_db_path=Path(appdirs.user_data_dir(
             "graph_explorer")) / "workspaces.json",
         graph_db_uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
         graph_db_user=os.getenv('NEO4J_USER', 'neo4j'),
-        graph_db_password=os.getenv('NEO4J_PASSWORD', 'neo4j')
+        graph_db_password=os.getenv('NEO4J_PASSWORD', 'password')
     )
