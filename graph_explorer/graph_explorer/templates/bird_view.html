@@ -43,6 +43,22 @@
         let gContentWrapper = mainContentGroup.append("g").attr("class", "content-wrapper");
         gContentWrapper.html(mainViewGraphSvgHtml);
 
+        let birdViewSvg = d3.select("#bird-view-svg");
+        let birdViewHeight = birdViewSvg.node().clientHeight;
+        let birdViewWidth = birdViewSvg.node().clientWidth;
+
+        let bBox = gContentWrapper.node().getBBox();
+        let xScale = birdViewWidth / bBox.width;
+        let yScale = birdViewHeight / bBox.height;
+
+        let minScale = Math.min(xScale, yScale);
+
+        let x = bBox.x * minScale;
+        let y = bBox.y * minScale;
+        let translate = [(birdViewWidth / 2) - (bBox.width * minScale / 2) - x, (birdViewHeight / 2) - (bBox.height * minScale / 2) - y];
+
+        gContentWrapper.attr("transform", `translate(${translate}) scale(${minScale})`);
+
         setTimeout(function() { isGraphLoaded = false; }, 100);
     }
 </script>
