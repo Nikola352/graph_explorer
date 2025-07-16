@@ -25,14 +25,12 @@ class SpotifyDataSource(DataSourcePlugin):
         artist_name = kwargs["artist_name"]
         max_neighbours = int(kwargs["max_neighbours"])
         recursion_depth = int(kwargs["recursion_depth"])
-        print("AAAAAAAAAAAA", auth_token, artist_name,
-              max_neighbours, recursion_depth)
         return create_graph(auth_token, artist_name, max_neighbours, recursion_depth)
 
     def get_configuration_parameters(self) -> List[DataSourceConfigParam]:
         return [
             DataSourceConfigParam(
-                name="auth_token", value_type=DataSourceConfigParam.Type.STRING, display_name="Auth Token"),
+                name="auth_token", value_type=DataSourceConfigParam.Type.STRING, display_name="Auth Token", required=False),
             DataSourceConfigParam(
                 name="artist_name", value_type=DataSourceConfigParam.Type.STRING, display_name="Artist Name"),
             DataSourceConfigParam(
