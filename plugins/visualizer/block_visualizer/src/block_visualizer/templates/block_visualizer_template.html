@@ -1,0 +1,234 @@
+<style>
+    .node {
+        cursor: pointer;
+    }
+
+    .link {
+        stroke: #1a699e82;
+        stroke-width: 1.5px;
+        fill: none;
+    }
+
+    #svg-{{ name }} {
+        width: 100%;
+        height: 100%;
+    }
+
+    .tooltip {
+        font-family: sans-serif;
+        font-size: 12px;
+        pointer-events: none;
+        position: absolute;
+        line-height: 1.2;
+        z-index: 10;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 6px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+</style>
+
+<svg id="svg-{{ name }}"></svg>
+
+<script></script>
+<script>
+function render() {
+    
+        function createNodeId(id){
+            return `ID: ${id}`;
+        }
+    const nodes = [
+        {% for n in nodes %}
+        {
+            id: createNodeId("{{ n.id }}"),
+            data: {{ n.data | tojson }}
+        },
+        {% endfor %}
+    ];
+
+    var links = [
+        {% for e in edges %}
+        {
+            source: createNodeId("{{ e.src.id }}"),
+            target: createNodeId("{{ e.target.id }}"),
+            data: {{ e.data | tojson }}
+        },
+        {% endfor %}
+    ];
+
+    links = links.map(link => ({
+            ...link,
+            source: nodes.find(n => n.id === link.source),
+            target: nodes.find(n => n.id === link.target),
+        }));
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const svg = d3.select("#svg-{{ name }}");
+    const g = svg.append("g");
+
+    svg.call(d3.zoom().on("zoom", (e) => {
+        g.attr("transform", e.transform);
+    }));
+
+   
+
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(220))
+        .force("charge", d3.forceManyBody().strength(-400))
+        .force("collide", d3.forceCollide().radius(150))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    const link = g.selectAll(".link")
+            .data(links)
+            .enter()
+            .append("path")
+            .attr("class", "link")
+            {% if directed %}
+            .attr("marker-end", "url(#arrowhead)")
+            {% endif %}
+
+    const node = g.selectAll(".node")
+        .data(nodes)
+        .enter()
+        .append("g")
+        .attr("class", "node")
+        .attr("id", d => d.id)
+        .call(drag(simulation));
+            
+
+        const rectWidth = 160;
+        const lineHeight = 18;
+
+    node.append("rect")
+        .attr("width", rectWidth)
+        .attr("height", function(d) {
+            return 20 + (Object.keys(d.data || {}).length + 1) * lineHeight;
+        })
+        .attr("x", -75)
+        .attr("y", -10)
+        .attr("fill", "#fdf6e3")
+        .attr("stroke", "#04446fff")
+        .attr("stroke-width", 2);
+
+    node.each(function(d) {
+        const g = d3.select(this);
+        const attributes = d.data || {};
+        const lines = [`${d.id}`, ...Object.entries(attributes).map(([key, value]) => `${key}= ${value}`)];
+
+        lines.forEach((line, i) => {
+            g.append("text")
+                .attr("x", 0)
+                .attr("y", i * lineHeight)
+                .attr("text-anchor", "middle")
+                .attr("font-size", 12)
+                .attr("font-family", "monospace")
+                .attr("fill", "#1a699e")
+                .text(line);
+        });
+        g.append("line")
+            .attr("x1", -rectWidth / 2 + 4)   
+            .attr("x2", rectWidth / 2 + 4)    
+            .attr("y1", lineHeight/2 -4)        
+            .attr("y2", lineHeight/2 - 4)
+            .attr("stroke", "#04446fff")
+            .attr("stroke-width", 1);
+    });
+
+    const tooltip = d3.select("body").append("div").attr("class", "tooltip");
+
+    node.on("mouseover", (event, d) => {
+            tooltip.transition().duration(200).style("opacity", 0.9);
+            tooltip.html(`
+            ${d.id}<br/>
+            Info: ${d.data ? JSON.stringify(d.data) : "N/A"}
+            `)
+            .style("left", (event.pageX+10) + "px")
+            .style("top", (event.pageY+10) + "px");
+        }).on("mousemove", (event) => {
+        tooltip.style("left", (event.pageX + 10) + "px")
+               .style("top", (event.pageY + 10) + "px");
+    }).on("mouseout", () => {
+        tooltip.transition().duration(500).style("opacity", 0);
+    })
+    .on("click", function(event, d) {
+    d3.selectAll(".node").each(function() {
+        d3.select(this).select("rect")
+            .transition().duration(300)
+            .attr("width", rectWidth)
+            .attr("height", 20 + (Object.keys(d.data || {}).length + 1) * lineHeight)
+            .attr("x", -rectWidth / 2)
+            .attr("stroke-width", 2)
+            .style("filter", null); 
+    });
+
+    const newWidth = rectWidth + 40;
+    const newHeight = 20 + (Object.keys(d.data || {}).length + 1) * lineHeight + 20;
+
+    d3.select(this).select("rect")
+        .transition().duration(300)
+        .attr("width", newWidth)
+        .attr("height", newHeight)
+        .attr("x", -newWidth / 2)
+        .attr("stroke-width", 3)
+        .style("filter", "drop-shadow(0px 0px 5px #444)");
+});
+
+
+
+
+    simulation.on("tick", () => {
+            link.attr("d", function(d) {
+                const reverse = links.find(l => l.source.id === d.target.id && l.target.id === d.source.id);
+
+                if (reverse && reverse !== d) {
+                    const offset = 20;
+
+                    const dx = d.target.x - d.source.x;
+                    const dy = d.target.y - d.source.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+
+                    const nx = -dy / dist;
+                    const ny = dx / dist;
+
+                    const mx = (d.source.x + d.target.x)/2 + nx * offset;
+                    const my = (d.source.y + d.target.y)/2 + ny * offset;
+
+                    return `M${d.source.x},${d.source.y} L${mx},${my} L${d.target.x},${d.target.y}`;
+                } else {
+                    return `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`;
+                }
+            });
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+    function drag(simulation) {    
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+        
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+        
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+        
+        return d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
+    }
+
+}
+render();
+</script>

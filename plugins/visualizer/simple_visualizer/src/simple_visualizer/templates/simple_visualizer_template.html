@@ -66,8 +66,8 @@
             {
                 source: createNodeId("{{ e.src.id }}"),
                 target: createNodeId("{{ e.target.id }}"),
-                data: {{ e.data | tojson }},
-            },
+                data: {{ e.data | tojson }}
+            }{% if not loop.last %},{% endif %}
             {% endfor %}
         ];
 
