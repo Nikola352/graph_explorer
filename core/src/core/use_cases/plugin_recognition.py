@@ -1,8 +1,8 @@
 from importlib.metadata import entry_points
 from typing import List, Tuple
 
-from api.src.api.components.data_source import DataSourcePlugin
-from api.src.api.components.visualizer import VisualizerPlugin
+from api.components.data_source import DataSourcePlugin
+from api.components.visualizer import VisualizerPlugin
 from core.config.constants import (DATA_SOURCE_PLUGIN_GROUP_NAME,
                                    VISUALIZER_PLUGIN_GROUP_NAME)
 
