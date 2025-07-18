@@ -123,4 +123,39 @@ document.addEventListener("DOMContentLoaded", () => {
                 .call(zoom.transform, newTransform);
         }
     }
+
+    const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("padding", "6px")
+        .style("background", "rgba(0,0,0,0.7)")
+        .style("color", "white")
+        .style("border-radius", "4px")
+        .style("pointer-events", "none")
+        .style("opacity", 0);
+
+    d3.selectAll("g.node[tooltip='true']").on("mouseover", (event, d) => {
+            tooltip.transition().duration(200).style("opacity", 0.9);
+
+            let formattedData = "N/A";
+            if (d.data && typeof d.data === "object") {
+                formattedData = Object.entries(d.data)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join("<br/>");
+            }
+            tooltip.html(`
+                    ${d.id}<br/>
+                    ${formattedData}
+                `)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY + 10) + "px");
+        })
+        .on("mousemove", (event) => {
+            tooltip
+                .style("left", (event.pageX+10) + "px")
+                .style("top", (event.pageY+10) + "px");
+        })
+        .on("mouseout", () => {
+            tooltip.transition().duration(500).style("opacity", 0);
+        });
 });
