@@ -21,12 +21,12 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     });
 
-    d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).distance(300))
+    const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).distance(350))
             .force("charge", d3.forceManyBody().strength(100))
-            .force("center", d3.forceCenter(1000 / 2, 700 / 2))
+            .force("center", d3.forceCenter(500, 400))
             .force("gravity", d3.forceManyBody().strength(-100))
-            .force("collide", d3.forceCollide().radius(80))
+            .force("collide", d3.forceCollide().radius(100))
         .on("tick",tick)
 
     function tick() {
@@ -56,4 +56,21 @@ document.addEventListener("DOMContentLoaded", () => {
         svg.selectAll("g.node")
         .data(nodes).attr("transform", d => `translate(${d.x},${d.y})`);
     }
+
+    d3.selectAll("g.node[drag='true']")
+        .call(d3.drag()
+        .on("start", (event, d) => {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        })
+        .on("drag", (event, d) => {
+            d.fx = event.x;
+            d.fy = event.y;
+        })
+        .on("end", (event, d) => {
+            if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+        }));
 });
