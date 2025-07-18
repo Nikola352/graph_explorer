@@ -81,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     d3.selectAll("g.node[click-focus='true']")
         .on("click", function(event, d) {
+            dispatchNodeFocusEvent(d.id);
             handleNodeFocus(d.id);
     });
 
@@ -103,8 +104,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!focusedNode.empty()) {
             const svg = d3.select("svg[zoom='true']");
             const svgNode = svg.node();
-            console.log(svg)
-            console.log(svgNode)
             const transform = d3.zoomTransform(svgNode);
 
             const svgWidth = svgNode.clientWidth;
@@ -158,4 +157,9 @@ document.addEventListener("DOMContentLoaded", () => {
         .on("mouseout", () => {
             tooltip.transition().duration(500).style("opacity", 0);
         });
+
+    document.addEventListener("node-focus", (e) => {
+        const nodeId = e.detail;
+        handleNodeFocus(nodeId);
+    });
 });

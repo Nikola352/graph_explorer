@@ -16,7 +16,6 @@
     </svg>
 </div>
 <script>
-
     let isGraphLoaded = false;
     const configuration = { attributes: true, childList: true, subtree: true };
     const graphObserver = new MutationObserver( () => {
@@ -71,6 +70,12 @@
         let translate = [(birdViewWidth / 2) - (bBox.width * minScale / 2) - x, (birdViewHeight / 2) - (bBox.height * minScale / 2) - y];
 
         gContentWrapper.attr("transform", `translate(${translate}) scale(${minScale})`);
+
+        let nodes = d3.selectAll("#bird-view-svg g.node[click-focus='true']");
+        nodes.on("click", function(event, d) {
+            const id = d3.select(this).attr("id");
+            dispatchNodeFocusEvent(id);
+        });
 
         setTimeout(function() { isGraphLoaded = false; }, 100);
     }
