@@ -78,4 +78,49 @@ document.addEventListener("DOMContentLoaded", () => {
     const handleZoom = (e) => g.attr('transform', e.transform);
     const zoom = d3.zoom().on('zoom', handleZoom);
     d3.selectAll("svg[zoom='true']").call(zoom);
+
+    d3.selectAll("g.node[click-focus='true']")
+        .on("click", function(event, d) {
+            handleNodeFocus(d.id);
+    });
+
+    function handleNodeFocus(nodeId){
+        d3.selectAll(".active-node").select("circle")
+            .style("fill", "white")
+            .style("stroke", "#04446fff")
+            .style("stroke-width", "1.5px");
+        d3.selectAll(".active-node").classed("active-node", false);
+
+        const focusedNode = g.selectAll(".node")
+            .filter(d => d.id === nodeId);
+        focusedNode.classed("active-node", true);
+        focusedNode.select("circle")
+            .style("fill", "white")  
+            .style("stroke", "#04446fff") 
+            .style("stroke-width", "4px");
+        focusedNode.select("text").style("fill", "#04446fff");
+
+        if (!focusedNode.empty()) {
+            const svg = d3.select("svg[zoom='true']");
+            const svgNode = svg.node();
+            console.log(svg)
+            console.log(svgNode)
+            const transform = d3.zoomTransform(svgNode);
+
+            const svgWidth = svgNode.clientWidth;
+            const svgHeight = svgNode.clientHeight;
+
+            const nodeDatum = focusedNode.datum();
+            const targetX = nodeDatum.x;
+            const targetY = nodeDatum.y;
+
+            const newTransform = d3.zoomIdentity
+                .translate(svgWidth / 2 - targetX * transform.k, svgHeight / 2 - targetY * transform.k)
+                .scale(transform.k);
+
+            svg.transition()
+                .duration(750)
+                .call(zoom.transform, newTransform);
+        }
+    }
 });
