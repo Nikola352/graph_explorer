@@ -12,17 +12,6 @@
     width: 100%;
     height: 100%;
 }
-.active-node {
-    stroke-width: 2px;
-}
-.tooltip {
-  font-family: sans-serif;
-  font-size: 12px;
-  pointer-events: none;
-  position: absolute;
-  line-height: 1.2;
-  z-index: 10;
-}
 
 </style>
 <script>
@@ -32,55 +21,39 @@
 </svg>
 <script>
     function render() {
-        function getNodeId(nodeName){
-            return nodeName.split(":")[1];
-        }
-        function createNodeId(id){
-            return `ID:${id}`;
-        }
-        function handleNodeFocus(nodeId){
-            d3.selectAll(".active-node").select("circle").style("fill","white");
-            d3.selectAll(".active-node").select("text").style("fill","#04446fff");
-            d3.selectAll(".active-node").classed("active-node", false);
-            const focusedNode = g.selectAll(".node")
-                .filter(d => d.id === createNodeId(nodeId));
-            focusedNode.classed("active-node",true);
-            focusedNode.select("circle").style("fill","#04446fff");
-            focusedNode.select("text").style("fill", "white");
-        }
+      function getNodeId(nodeName){
+          return nodeName.split(":")[1];
+      }
+      function createNodeId(id){
+          return `ID:${id}`;
+      }
+      var nodes = [
+          
+          {% for n in nodes %}
+          {
+              id: createNodeId("{{ n.id }}"),
+              data: {{ n.data | tojson }},
+          },
+          {% endfor %}
+      ];
 
-        document.addEventListener("node-focus", function(event){
-            handleNodeFocus(event.detail);
-        });
-        var nodes = [
-            {% for n in nodes %}
-            {
-                id: createNodeId("{{ n.id }}"),
-                data: {{ n.data | tojson }},
-            },
-            {% endfor %}
-        ];
+      var links = [
+          {% for e in edges %}
+          {
+              source: createNodeId("{{ e.src.id }}"),
+              target: createNodeId("{{ e.target.id }}"),
+              data: {{ e.data | tojson }},
+          },
+          {% endfor %}
+      ];
 
-        var links = [
-            {% for e in edges %}
-            {
-                source: createNodeId("{{ e.src.id }}"),
-                target: createNodeId("{{ e.target.id }}"),
-                data: {{ e.data | tojson }},
-            },
-            {% endfor %}
-        ];
+      links = links.map(link => ({
+          ...link,
+          source: nodes.find(n => n.id === link.source),
+          target: nodes.find(n => n.id === link.target),
+      }));
 
-        links = links.map(link => ({
-            ...link,
-            source: nodes.find(n => n.id === link.source),
-            target: nodes.find(n => n.id === link.target),
-        }));
-
-        const handleZoom = (e) => g.attr('transform', e.transform);
-        const zoom = d3.zoom().on('zoom', handleZoom);
-
-        d3.select('#svg-{{name}}').append('defs')
+      d3.select('#svg-{{name}}').attr("zoom", true).append('defs')
         .append('marker')
         .attr("id", "arrowhead")
         .attr("viewBox", "0 -5 10 10")
@@ -93,21 +66,14 @@
         .attr("d", "M0,-5 L10,0 L0,5")
         .attr("fill", "#1a699e82");
 
-        var g = d3.select('#svg-{{name}}').call(zoom).append('g');
-
-        const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).distance(300))
-            .force("charge", d3.forceManyBody().strength(100))
-            .force("center", d3.forceCenter(1000 / 2, 700 / 2))
-            .force("gravity", d3.forceManyBody().strength(-100))
-            .force("collide", d3.forceCollide().radius(80))
-            .on("tick", tick);
+        var g = d3.select('#svg-{{name}}').append('g');
 
         const link = g.selectAll(".link")
             .data(links)
             .enter()
             .append("path")
             .attr("class", "link")
+            .attr("enabled", true)
             {% if directed %}
             .attr("marker-end", "url(#arrowhead)")
             {% endif %}
@@ -121,9 +87,11 @@
             .enter()
             .append("g")
             .attr("class", "node")
-            .attr("id", d => d.id)
-            .attr('onclick', d => `dispatchNodeFocusEvent("${getNodeId(d.id)}");`)
-            .call(drag(simulation));
+            .attr("enabled", true)
+            .attr("drag", true)
+            .attr("click-focus", true)
+            .attr("tooltip", true)
+            .attr("id", d => d.id);
 
         const radius=34;
         const textSize=14;
@@ -144,88 +112,6 @@
                 .attr('fill','#1a699e')
                 .text(d.id);
             });
-
-        
-
-        function tick() {
-            link.attr("d", function(d) {
-                const reverse = links.find(l => l.source.id === d.target.id && l.target.id === d.source.id);
-
-                if (reverse && reverse !== d) {
-                    const offset = 20;
-
-                    const dx = d.target.x - d.source.x;
-                    const dy = d.target.y - d.source.y;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-
-                    const nx = -dy / dist;
-                    const ny = dx / dist;
-
-                    const mx = (d.source.x + d.target.x)/2 + nx * offset;
-                    const my = (d.source.y + d.target.y)/2 + ny * offset;
-
-                    return `M${d.source.x},${d.source.y} L${mx},${my} L${d.target.x},${d.target.y}`;
-                } else {
-                    return `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`;
-                }
-            });
-            node.attr("transform", d => `translate(${d.x},${d.y})`);
-        }
-
-
-
-
-        function drag(simulation) {    
-            function dragstarted(event) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            event.subject.fx = event.subject.x;
-            event.subject.fy = event.subject.y;
-            }
-            
-            function dragged(event) {
-            event.subject.fx = event.x;
-            event.subject.fy = event.y;
-            }
-            
-            function dragended(event) {
-            if (!event.active) simulation.alphaTarget(0);
-            event.subject.fx = null;
-            event.subject.fy = null;
-            }
-            
-            return d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended);
-        }
-
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
-            .style("position", "absolute")
-            .style("padding", "6px")
-            .style("background", "rgba(0,0,0,0.7)")
-            .style("color", "white")
-            .style("border-radius", "4px")
-            .style("pointer-events", "none")
-            .style("opacity", 0);
-
-        node.on("mouseover", (event, d) => {
-            tooltip.transition().duration(200).style("opacity", 0.9);
-            tooltip.html(`
-            ID: ${d.id}<br/>
-            Info: ${d.data ? JSON.stringify(d.data) : "N/A"}
-            `)
-            .style("left", (event.pageX+10) + "px")
-            .style("top", (event.pageY+10) + "px");
-        })
-        .on("mousemove", (event) => {
-            tooltip
-                .style("left", (event.pageX+10) + "px")
-                .style("top", (event.pageY+10) + "px");
-        })
-        .on("mouseout", () => {
-            tooltip.transition().duration(500).style("opacity", 0);
-        });
     }
     render();
 </script>
