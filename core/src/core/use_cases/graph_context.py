@@ -2,10 +2,12 @@ from typing import List
 
 from api.components.data_source import DataSourcePlugin
 from api.components.visualizer import VisualizerPlugin
+from api.models.graph import Graph
 from core.models.filter import Filter
 from core.models.workspace import Workspace
 from core.repositories.graph_repository import GraphRepository
 from core.use_cases.workspaces import WorkspaceService
+from neo4j._sync.work import workspace
 
 
 class GraphContext(object):
@@ -120,6 +122,27 @@ class GraphContext(object):
         if self._selected_data_source is None:
             raise KeyError("No data source selected")
         graph = self._selected_data_source.load(**self._data_source_config)
+        self._graph_repository.save_graph(self._workspace_id, graph)
+
+    def get_graph(self) -> Graph:
+        """
+        Getting graph from repository
+
+        :raises KeyError: If no data source is selected
+        :return graph
+        :rtype Graph
+        """
+        if self._selected_data_source is None:
+            raise KeyError("No data source selected")
+        return self._graph_repository.query_graph(self._workspace_id, [], "");
+
+    def save_graph(self, graph:Graph):
+        """
+        Saving graph to repository
+
+        :param graph: updated graph to save
+        :type graph: Graph
+        """
         self._graph_repository.save_graph(self._workspace_id, graph)
 
     def select_visualizer(self, visualizer_id: str):
