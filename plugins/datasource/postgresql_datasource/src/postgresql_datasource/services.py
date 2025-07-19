@@ -1,4 +1,4 @@
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
 
 import psycopg2
 
@@ -25,7 +25,7 @@ def create_graph(host: str, port: int, database: str, username: str, password: s
 
     # 1. Create nodes
     for table in tables:
-        cursor.execute(f"SELECT * FROM {table}")
+        cursor.execute(f'SELECT * FROM "{table}"')
         records = cursor.fetchall()
         if cursor.description is None:
             continue
@@ -55,8 +55,8 @@ def create_graph(host: str, port: int, database: str, username: str, password: s
 
         query = f"""
             SELECT s.*, t.*
-            FROM {src_table} s
-            JOIN {target_table} t ON s.{fk_column} = t.{target_column}
+            FROM "{src_table}" s
+            JOIN "{target_table}" t ON s."{fk_column}" = t."{target_column}"
         """
         cursor.execute(query)
         links = cursor.fetchall()
