@@ -65,7 +65,6 @@ class GraphContext(object):
 
         if workspace.data_source_id and workspace.data_source_id in self.data_source_plugins:
             self._selected_data_source = self.data_source_plugins[workspace.data_source_id]
-            self.refresh_data_source()
         else:
             self._selected_data_source = None
 
