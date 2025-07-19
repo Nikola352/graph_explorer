@@ -1,0 +1,98 @@
+<!-- CLI Modal -->
+<style>
+#cli-modal {
+  display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center;
+}
+#cli-modal .cli-modal-content {
+  background: #fff; padding: 2.2rem 2.2rem 1.5rem 2.2rem; border-radius: 14px; min-width: 420px; max-width: 98vw; max-height: 92vh;
+  display: flex; flex-direction: column; gap: 1.2rem; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  position: relative;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+#cli-modal .cli-modal-title {
+  font-size: 1.7rem; font-weight: 600; margin-bottom: 0.1em; color: #1a699e;
+  letter-spacing: 0.5px;
+}
+#cli-modal .cli-modal-desc {
+  font-size: 1.05rem; color: #444; margin-bottom: 0.5em;
+}
+#cli-modal .cli-modal-close {
+  position: absolute; top: 1.1rem; right: 1.1rem; background: none; border: none; font-size: 1.7rem; cursor: pointer; color: #bbb; transition: color 0.2s;
+}
+#cli-modal .cli-modal-close:hover { color: #1a699e; }
+#cli-modal textarea {
+  width: 100%; min-height: 3.5em; font-size: 1.13em; padding: 0.6em; border-radius: 7px; border: 1.5px solid #b7c7d6; resize: vertical; background: #f8fafc;
+  transition: border 0.2s;
+}
+#cli-modal textarea:focus { border: 1.5px solid #1a699e; outline: none; }
+#cli-modal .cli-modal-result {
+  min-height: 2.5em; max-height: 10em; overflow-y: auto; font-family: 'Fira Mono', monospace; font-size: 1.04em; background: #f7f7fa;
+  border-radius: 7px; border: 1.2px solid #e0e0e0; padding: 0.7em 1em; color: #333; margin-bottom: 0.5em;
+  transition: background 0.2s, color 0.2s;
+  display: flex; align-items: center; gap: 0.5em;
+}
+#cli-modal .cli-modal-result.success { background: #e8fbe8; color: #1a7f1a; border-color: #b6eab6; }
+#cli-modal .cli-modal-result.error { background: #fbeaea; color: #b30000; border-color: #f5b6b6; }
+#cli-modal .cli-modal-result .icon { font-size: 1.3em; }
+#cli-modal .cli-modal-spinner {
+  display: inline-block; width: 1.2em; height: 1.2em; border: 2.5px solid #bbb; border-top: 2.5px solid #1a699e; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle;
+}
+#cli-modal .cli-modal-graphinfo {
+  background: #f4f8fb; border: 1px solid #dbe6ef; border-radius: 7px; padding: 0.7em 1em; font-size: 0.98em; margin-bottom: 0.5em;
+  max-height: 8em; overflow-y: auto;
+}
+#cli-modal .cli-modal-graphinfo-title { font-weight: bold; color: #1a699e; margin-bottom: 0.2em; }
+#cli-modal .cli-modal-graphinfo-list { margin: 0.2em 0 0.5em 0.7em; padding: 0; font-family: monospace; font-size: 0.97em; }
+#cli-modal .cli-modal-help-btn {
+  background: #f4f8fb; color: #1a699e; border: 1px solid #dbe6ef; border-radius: 6px; padding: 0.2em 0.8em; font-size: 1em; cursor: pointer; margin-left: auto; margin-bottom: 0.5em; transition: background 0.2s, color 0.2s;
+}
+#cli-modal .cli-modal-help-btn:hover { background: #e0eaf5; color: #174e7c; }
+#cli-modal .cli-modal-example {
+  background: #f8fafc; border-left: 4px solid #1a699e; padding: 0.5em 1em; border-radius: 5px; font-size: 0.98em; color: #222; margin-bottom: 0.5em;
+  font-family: 'Fira Mono', monospace;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
+<div id="cli-modal">
+  <div class="cli-modal-content">
+    <button class="cli-modal-close" id="cli-close-btn" title="CLose">&times;</button>
+    <div class="cli-modal-title">Graph CLI</div>
+    <button class="cli-modal-help-btn" id="cli-help-btn" type="button">Help</button>
+    <div class="cli-modal-desc">Type CLI command. For help click <b>Help</b>.</div>
+    <div class="cli-modal-example"><b>Ex.</b> <code>create-node --id 1 --data '{"name": "Test"}'</code></div>
+    <div class="cli-modal-graphinfo">
+      <div class="cli-modal-graphinfo-title">Workspace: <span style="color:#333">
+        {% if current_workspace %}
+          {{ current_workspace.id }}
+          {{current_workspace.data_source_id}}
+        {% else %}
+          N/A
+        {% endif %}
+      </span></div>
+      <div><b>Nodes:</b>
+        <ul class="cli-modal-graphinfo-list">
+          {% for n in graph_nodes %}
+            <li>ID: <b>{{ n.id }}</b>, data: <span style="color:#1a699e">{{ n.data }}</span></li>
+          {% empty %}
+            <li><i>No nodes</i></li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div><b>Edges:</b>
+        <ul class="cli-modal-graphinfo-list">
+          {% for e in graph_edges %}
+            <li>{{ e.src }} &rarr; {{ e.tgt }}, data: <span style="color:#1a699e">{{ e.data }}</span></li>
+          {% empty %}
+            <li><i>No edges</i></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <textarea id="cli-command-input" placeholder="Type CLI command here..."></textarea>
+    <div id="cli-result" class="cli-modal-result"></div>
+    <div style="display:flex; gap:1rem; justify-content: flex-end;">
+      <button id="cli-execute-btn" class="button is-success">Execute</button>
+    </div>
+  </div>
+</div>
