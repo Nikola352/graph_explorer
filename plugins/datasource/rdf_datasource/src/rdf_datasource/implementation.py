@@ -6,7 +6,7 @@ from .services import ProxyRdfGraph
 class RdfDataSource(DataSourcePlugin):
   
   def __init__(self):
-    self.proxy_rdf_graph = ProxyRdfGraph("./plugins/datasource/rdf_datasource/data/graph.ttl")
+    self.proxy_rdf_graph = ProxyRdfGraph()
   
   def name(self) -> str:
     return "RDF Data Source"
@@ -15,8 +15,16 @@ class RdfDataSource(DataSourcePlugin):
     return "rdf_data_source"
     
   def load(self, **kwargs) -> Graph:
-    return self.proxy_rdf_graph.create_graph()
+    filename = kwargs.get("filename")
+    return self.proxy_rdf_graph.create_graph(filename)
     
   def get_configuration_parameters(self) -> List[DataSourceConfigParam]:
-    return []
+    return [
+      DataSourceConfigParam(
+        name="filename",
+        value_type=DataSourceConfigParam.Type.STRING,
+        display_name="File Name",
+        required=True
+      )
+    ]
     

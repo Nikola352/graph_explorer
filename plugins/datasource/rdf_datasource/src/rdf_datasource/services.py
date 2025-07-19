@@ -16,26 +16,29 @@ class RdfGraphAbstract(): # Abstract interface
   
 class RealRdfGraph(RdfGraphAbstract): # Concrete implementation 
   def __init__(self, filename: str):
-    self.filename = filename
+    self.filename = "./plugins/datasource/rdf_datasource/data/"+filename+".ttl"
+    print("FILE NAME: ", 	self.filename)
     self.graph = RdfGraph()
     
   def load(self) -> RdfGraph:
+    print("FILE NAME: ", 	self.filename)
     self.graph.parse(self.filename, format='turtle')
     return self.graph
   
 class ProxyRdfGraph(RdfGraphAbstract): # Proxy
-  def __init__(self, filename: str):
-    self.filename = filename
+  def __init__(self):
     self.rdf_graph = None
     self.graph = None
     
-  def load(self) -> RdfGraph:
-    if self.rdf_graph is None:
-      self.rdf_graph = RealRdfGraph(self.filename).load()
+  def load(self, filename: str) -> RdfGraph:
+    if not filename:
+      self.rdf_graph = RdfGraph()
+    else:
+      self.rdf_graph = RealRdfGraph(filename).load()
     return self.rdf_graph
     
-  def create_graph(self) -> Graph:
-    self.load()
+  def create_graph(self, filename: str) -> Graph:
+    self.load(filename)
     graph = Graph(directed=True, root_id=None)
     node_map = {}
     
