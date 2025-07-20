@@ -602,9 +602,7 @@
       // Label
       const label = document.createElement('span');
       label.className = 'tree-label';
-      let labelText = nodeData.shortName + 
-        (nodeData.fullData?.age ? ` (${nodeData.fullData.age})` : '') + 
-        ` [${nodeData.children.length}]`;
+      let labelText = nodeData.shortName + ` [${nodeData.children.length}]`;
       
       // Add cycle indicator
       if (isCyclic) {
