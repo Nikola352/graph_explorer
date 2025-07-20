@@ -228,6 +228,7 @@ class GraphRepository(object):
         regex = f"(?i).*{search_term}.*"
         clause = f"ANY(prop IN keys({node_name}) WHERE {node_name}[prop] =~ ${search_term_key})"
         params = {search_term_key: regex}
+
         return clause, params
 
 
@@ -248,3 +249,4 @@ def _parse_value(value: Any) -> Any:
     else:
         # Ignore or raise if unsupported
         return str(value)
+
