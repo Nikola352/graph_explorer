@@ -1,5 +1,8 @@
-from .node import Node
 from typing import Dict
+
+from api.models.data import DataDict
+
+from .node import Node
 
 
 class Edge:
@@ -11,15 +14,15 @@ class Edge:
     :param target: Target node of the edge.
     :type target: Node
     :param data: Additional data associated with the edge.
-    :type data: dict
+    :type data: DataDict
     """
 
-    def __init__(self, data: Dict, src: Node, target: Node):
+    def __init__(self, data: DataDict, src: Node, target: Node):
         """
         Initializes Edge object.
 
         :param data: Data stored in an edge.
-        :type data: dict
+        :type data: DataDict
         :param src: Source Node.
         :type src: Node
         :param target: Target Node.
