@@ -1,8 +1,11 @@
 import os
+
+from block_visualizer.json_serializer import serialize_json
 from jinja2 import Environment, FileSystemLoader
 
 from api.components.visualizer import VisualizerPlugin
 from api.models.graph import Graph
+
 
 class BlockVisualizer(VisualizerPlugin):
     """
@@ -16,6 +19,7 @@ class BlockVisualizer(VisualizerPlugin):
         template_path = os.path.join(os.path.dirname(__file__))
         environment = Environment(
             loader=FileSystemLoader(template_path + "/templates"))
+        environment.filters['tojson'] = serialize_json
         self.template = environment.get_template(
             "block_visualizer_template.html")
 

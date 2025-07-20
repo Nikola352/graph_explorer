@@ -1,4 +1,6 @@
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
+
+from api.models.data import DataDict
 
 
 class Node:
@@ -7,18 +9,18 @@ class Node:
 
     Attributes:
         id: str - Node unique identifier 
-        data: dict - Additional data of a node
+        data: DataDict - Additional data of a node
         edges: list[Edge] - List of adjecent edges
     """
 
-    def __init__(self, id: str, data: Dict, edges: Optional[List] = None):
+    def __init__(self, id: str, data: DataDict, edges: Optional[List] = None):
         """
         Initializes node object.
 
         :param id: Node unique identifier.
         :type id: str
         :param data: Data stored in a node.
-        :type data: dict
+        :type data: DataDict
         :param edges: List of adjecent edges of a node.
         :type edges: list["Edge"]
         :return: Doesn't return anything but initializes `Node` object.

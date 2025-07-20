@@ -1,6 +1,7 @@
 import os
 
 from jinja2 import Environment, FileSystemLoader
+from simple_visualizer.json_serializer import serialize_json
 
 from api.components.visualizer import VisualizerPlugin
 from api.models.graph import Graph
@@ -18,6 +19,7 @@ class SimpleVisualizer(VisualizerPlugin):
         template_path = os.path.join(os.path.dirname(__file__))
         environment = Environment(
             loader=FileSystemLoader(template_path + "/templates"))
+        environment.filters['tojson'] = serialize_json
         self.template = environment.get_template(
             "simple_visualizer_template.html")
 

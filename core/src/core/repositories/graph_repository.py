@@ -1,5 +1,8 @@
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple, cast
+from datetime import datetime, time
+from typing import Any, Dict, List, Optional, Tuple, cast
+
+from neo4j.time import Date as Neo4jDate
+from neo4j.time import DateTime as Neo4jDateTime
 
 from api.models.edge import Edge
 from api.models.graph import Graph
@@ -168,7 +171,7 @@ class GraphRepository(object):
             n_id = n_data["id"]
             if n_id not in node_map:
                 node_map[n_id] = Node(
-                    id=n_id, data={k: v for k, v in n_data.items() if k != "id" and k != "graph_id"})
+                    id=n_id, data={k: _parse_value(v) for k, v in n_data.items() if k != "id" and k != "graph_id"})
             n_node = node_map[n_id]
 
             # Node m
@@ -176,12 +179,12 @@ class GraphRepository(object):
                 m_id = m_data["id"]
                 if m_id not in node_map:
                     node_map[m_id] = Node(
-                        id=m_id, data={k: v for k, v in m_data.items() if k != "id" and k != "graph_id"})
+                        id=m_id, data={k: _parse_value(v) for k, v in m_data.items() if k != "id" and k != "graph_id"})
                 m_node = node_map[m_id]
 
             # Edge
             if r_data:
-                edge_data = {k: v for k, v in r_data.items() if k !=
+                edge_data = {k: _parse_value(v) for k, v in r_data.items() if k !=
                              "graph_id"}
                 edge = Edge(data=edge_data, src=n_node, target=m_node)
                 edges.add(edge)
@@ -225,4 +228,25 @@ class GraphRepository(object):
         regex = f"(?i).*{search_term}.*"
         clause = f"ANY(prop IN keys({node_name}) WHERE {node_name}[prop] =~ ${search_term_key})"
         params = {search_term_key: regex}
+
         return clause, params
+
+
+def _parse_value(value: Any) -> Any:
+    if isinstance(value, Neo4jDateTime):
+        return datetime(
+            year=value.year,
+            month=value.month,
+            day=value.day,
+            hour=value.hour,
+            minute=value.minute,
+            second=value.second,
+        )
+    elif isinstance(value, Neo4jDate):
+        return datetime.combine(value.to_native(), time.min)
+    elif isinstance(value, (int, float, bool, str)):
+        return value
+    else:
+        # Ignore or raise if unsupported
+        return str(value)
+
