@@ -389,3 +389,30 @@ function deleteWorkspace(workspace_id) {
       console.error("Error:", error);
     });
 }
+
+function refreshDataSource() {
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  fetch(`refresh-data-source/`, {
+    method: "PUT",
+    headers: {
+      "X-CSRFToken": csrfToken,
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        return response
+          .json()
+          .then((errData) => {
+            console.error("Error:", errData.error || "Server error");
+          })
+          .catch((err) => {
+            console.error("Error:", err.error || "Server error");
+          });
+      }
+      location.reload();
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
+}

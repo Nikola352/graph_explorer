@@ -238,3 +238,14 @@ def data_source_config(request: HttpRequest) -> HttpResponse:
         param_dicts.append(param.to_dict())
 
     return JsonResponse({"params": param_dicts})
+
+
+def refresh_data_source(_: HttpRequest) -> HttpResponse:
+    graph_context: GraphContext = apps.get_app_config(
+        'graph_explorer').graph_context  # type: ignore
+
+    try:
+        graph_context.refresh_data_source()
+        return JsonResponse({"message": f"Successfully reloaded the data"})
+    except KeyError:
+        return JsonResponse({"error": f"No data source selected"}, status=400)

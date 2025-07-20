@@ -170,7 +170,15 @@
 
       <!--Main view panel-->
       <nav class="panel" id="main-view-panel">
-        <p class="panel-heading">Main View</p>
+        <div class="panel-heading">
+          <p>Main View</p>
+          {% if selected_data_source %}
+            <button class="refresh-button" onclick="refreshDataSource()" 
+                    title="Refresh current data source">
+              <span class="material-symbols-outlined">refresh</span>
+            </button>
+          {% endif %}
+        </div>
         <div style="height: 100% ; width: 100%" id="main-view-graph">
           {% if graph_html %}
             {{ graph_html | safe }}
