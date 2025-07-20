@@ -179,6 +179,9 @@
             </button>
           {% endif %}
         </div>
+        <button id="open-cli-modal-btn" class="button is-info is-small" style="margin-bottom: 10px;">
+          Open CLI
+        </button>
         <div style="height: 100% ; width: 100%" id="main-view-graph">
           {% if graph_html %}
             {{ graph_html | safe }}
@@ -191,5 +194,7 @@
       </nav>
     </div>
   </div>
+
+{% include "cli_modal.html" %}
 </body>
 {% endblock body %}

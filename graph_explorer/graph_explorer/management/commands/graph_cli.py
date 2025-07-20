@@ -1,0 +1,133 @@
+import json
+from django.core.management.base import BaseCommand
+from core.application import Application
+from graph_explorer.commands import GraphCommandProcessor
+from django.apps import apps
+
+
+def process_graph_command(subcommand, args_dict):
+    """
+    Process graph commands using the new command processor interface.
+    
+    :param subcommand: The command to execute (e.g., 'create-node', 'delete-edge')
+    :type subcomand: string
+    :param args_dict: Dictionary of command arguments
+    :type args_dict: Dictionary
+        
+    :return: Tuple of success and message
+    :rtype: Tuple(bool, string)
+    """
+    core_app: Application = apps.get_app_config('graph_explorer').core_app  # type: ignore
+    graph_ctx = core_app.graph_context
+    
+    workspace_id = args_dict.get('workspace')
+    if workspace_id:
+        try:
+            core_app.select_workspace(str(workspace_id))
+        except Exception as e:
+            return False, f'Failed to select workspace {workspace_id}: {str(e)}'
+    
+    graph_context = core_app.graph_context
+    if not graph_context:
+        return False, 'No graph context available. Please select a workspace first.'
+    
+    graph = graph_context.get_graph()
+    
+    processor = GraphCommandProcessor()
+    success, message = processor.execute_command(subcommand, graph, args_dict)
+    
+    if success:
+        try:
+            graph_context.save_graph(graph)
+        except Exception as e:
+            return False, f'Command succeeded but failed to save graph: {str(e)}'
+    
+    return success, message
+
+
+class Command(BaseCommand):
+    """
+    Class responsible for execute command line instructions on workspaces.
+    
+    JSON Format Usage:
+    When using JSON data in command line, you must escape quotes properly:
+    - Use: '{\"name\": \"Test\"}' 
+    - NOT: '{"name": "Test"}' (this will cause parsing errors)
+    
+    Examples:
+    - create-node --id 1 --data '{\"name\": \"John\", \"age\": 30}'
+    - create-edge --src 1 --tgt 2 --data '{\"weight\": 5, \"type\": \"friendship\"}'
+    """
+    help = 'Graph CLI commands for node and edge manipulation. Use escaped JSON format: \'{\\"name\\": \\"Test\\"}\''
+
+    def add_arguments(self, parser):
+        """
+        Add command line arguments to the parser.
+        
+        :param parser: The argument parser to add arguments to
+        :type parser: argparse.ArgumentParser
+        
+        :return: None
+        :rtype: None
+        """
+        # Create subparsers for different commands
+        subparsers = parser.add_subparsers(dest='command', help='Available commands')
+        
+        # Create node command
+        create_node_parser = subparsers.add_parser('create-node', help='Create a new node')
+        create_node_parser.add_argument('--workspace', type=str, help='Workspace ID to use')
+        create_node_parser.add_argument('--id', type=str, required=True, help='Node ID')
+        create_node_parser.add_argument('--data', type=str, default='{}', 
+                                      help='Node data as JSON (use escaped format: \'{\\"name\\": \\"Test\\"}\')')
+        
+        # Delete node command
+        delete_node_parser = subparsers.add_parser('delete-node', help='Delete a node')
+        delete_node_parser.add_argument('--workspace', type=str, help='Workspace ID to use')
+        delete_node_parser.add_argument('--id', type=str, required=True, help='Node ID')
+        
+        # Create edge command
+        create_edge_parser = subparsers.add_parser('create-edge', help='Create a new edge')
+        create_edge_parser.add_argument('--workspace', type=str, help='Workspace ID to use')
+        create_edge_parser.add_argument('--src', type=str, required=True, help='Source node ID')
+        create_edge_parser.add_argument('--tgt', type=str, required=True, help='Target node ID')
+        create_edge_parser.add_argument('--data', type=str, default='{}', 
+                                      help='Edge data as JSON (use escaped format: \'{\\"weight\\": 5}\')')
+        
+        # Delete edge command
+        delete_edge_parser = subparsers.add_parser('delete-edge', help='Delete an edge')
+        delete_edge_parser.add_argument('--workspace', type=str, help='Workspace ID to use')
+        delete_edge_parser.add_argument('--src', type=str, required=True, help='Source node ID')
+        delete_edge_parser.add_argument('--tgt', type=str, required=True, help='Target node ID')
+        
+        # Clear graph command
+        clear_graph_parser = subparsers.add_parser('clear-graph', help='Clear all nodes and edges from the graph')
+        clear_graph_parser.add_argument('--workspace', type=str, help='Workspace ID to use')
+
+    def handle(self, *args, **options):
+        """
+        Handle the command execution.
+        
+        :param args: Additional arguments passed to the command
+        :type args: tuple
+        :param options: Dictionary of command options and arguments
+        :type options: dict
+        
+        :return: None
+        :rtype: None
+        """
+        command = options.get('command')
+        if not command:
+            self.stdout.write('ERROR: No command specified. Use --help for available commands.')
+            self.stdout.write('\nJSON Format Examples:')
+            self.stdout.write('  create-node --id 1 --data \'{\\"name\\": \\"Test\\"}\'')
+            self.stdout.write('  create-edge --src 1 --tgt 2 --data \'{\\"weight\\": 5}\'')
+            return
+        
+        args_dict = {k: v for k, v in options.items() if k != 'command' and v is not None}
+        
+        success, message = process_graph_command(command, args_dict)
+        
+        if success:
+            self.stdout.write(f'SUCCESS: {message}')
+        else:
+            self.stdout.write(f'ERROR: {message}') 

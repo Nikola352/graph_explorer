@@ -101,11 +101,7 @@ class Graph:
         :param node:  The node to be removed from the graph.
         :type node: `Edge`
         """
-        if target_edge.src in self.nodes:
-            self.nodes.remove(target_edge.src)
-
-        if target_edge.target in self.nodes:
-            self.nodes.add(target_edge.target)
+        
 
         if target_edge in self.edges:
             self.edges.remove(target_edge)
