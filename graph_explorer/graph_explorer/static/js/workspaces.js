@@ -43,7 +43,7 @@ function openWorkspaceForm(workspace = null) {
         if (workspace.data_source) {
           loadDataSourceConfiguration(
             workspace.data_source,
-            workspace.config || {}
+            workspace.data_source_config || {}
           );
         }
       } else {
