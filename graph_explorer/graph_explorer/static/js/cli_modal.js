@@ -53,7 +53,7 @@ function updateGraphInfo(nodes, edges) {
         .map(
           (e) =>
             `<li>${e.src} &rarr; ${
-              e.tgt
+              e.target
             }, data: <span style='color:#1a699e'>${JSON.stringify(
               e.data
             )}</span></li>`
@@ -78,37 +78,95 @@ function showCliError(data) {
   if (data.usage) {
     cliResult.innerHTML =
       errIcon +
-      (data.error || "Error") +
+      (data.message || "Error") +
       '<br><pre style="margin:0;font-size:1em;white-space:pre-wrap;">' +
       data.usage +
       "</pre>";
   } else {
-    cliResult.innerHTML = errIcon + (data.error || "Unknown error.");
+    cliResult.innerHTML = errIcon + (data.message || "Unknown error.");
   }
   cliResult.className = "cli-modal-result error";
 }
 
+function parseCommand(commandString) {
+  const parts = [];
+  let current = "";
+  let inQuotes = false;
+  let quoteChar = "";
+
+  for (let i = 0; i < commandString.length; i++) {
+    const char = commandString[i];
+
+    if ((char === "'" || char === '"') && !inQuotes) {
+      inQuotes = true;
+      quoteChar = char;
+      current += char;
+    } else if (char === quoteChar && inQuotes) {
+      inQuotes = false;
+      current += char;
+    } else if (char === " " && !inQuotes) {
+      if (current.trim()) {
+        parts.push(current.trim());
+        current = "";
+      }
+    } else {
+      current += char;
+    }
+  }
+
+  if (current.trim()) {
+    parts.push(current.trim());
+  }
+
+  const command = parts[0];
+  const args = {};
+
+  for (let i = 1; i < parts.length; i += 2) {
+    if (i + 1 < parts.length) {
+      const key = parts[i].replace("--", "");
+      let value = parts[i + 1];
+
+      if (
+        (value.startsWith("'") && value.endsWith("'")) ||
+        (value.startsWith('"') && value.endsWith('"'))
+      ) {
+        value = value.slice(1, -1);
+      }
+
+      args[key] = value;
+    }
+  }
+
+  return { command, args };
+}
+
 cliExecuteBtn.onclick = async () => {
-  const command = cliInput.value.trim();
-  if (!command) {
+  const commandString = cliInput.value.trim();
+
+  if (!commandString) {
     cliResult.innerHTML =
       '<span class="icon">⚠️</span> Please enter a command.';
     cliResult.className = "cli-modal-result error";
     return;
   }
+
   cliResult.innerHTML = '<span class="cli-modal-spinner"></span> Executing...';
   cliResult.className = "cli-modal-result";
 
   try {
+    const { command, args } = parseCommand(commandString);
+
+    const requestBody = { command, args };
+
     const resp = await fetch("/cli/execute/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ command }),
+      body: JSON.stringify(requestBody),
     });
     const data = await resp.json();
 
     if (data.success) {
-      showCliSuccess(data.result, data.nodes, data.edges);
+      showCliSuccess(data.message, data.graph_nodes, data.graph_edges);
     } else {
       showCliError(data);
     }
@@ -118,7 +176,7 @@ cliExecuteBtn.onclick = async () => {
   }
 };
 
-// Close modal on Escape
+// Close modal
 window.addEventListener("keydown", (e) => {
   if (cliModal.style.display === "flex" && e.key === "Escape")
     cliModal.style.display = "none";
