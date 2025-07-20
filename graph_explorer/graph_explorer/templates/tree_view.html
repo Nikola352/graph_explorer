@@ -1,10 +1,880 @@
 <style>
-  #svg-container {
-    overflow: scroll;
-    width: 100%;
+  /* Custom tree styling */
+  #tree-container {
     height: 100%;
+    width: 100%;
+    overflow: auto;
+    padding: 10px;
+    position: relative;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  .tree-node {
+    cursor: pointer;
+    user-select: none;
+    font-size: 12px;
+    line-height: 20px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    position: relative;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+  }
+  
+  .tree-node:hover {
+    background: #f5f5f5;
+  }
+  
+  .tree-node.selected {
+    background: #e3f2fd;
+    color: #1976d2;
+  }
+  
+  .tree-node.has-multiple-parents {
+    border-left: 3px solid #ff9800;
+    padding-left: 8px;
+  }
+  
+  .tree-toggle {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 16px;
+    text-align: center;
+    color: #666;
+    background: none;
+    border: none;
+    padding: 0;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+  }
+  
+  .tree-toggle:hover {
+    background: rgba(0,0,0,0.1);
+    color: #333;
+  }
+  
+  .tree-toggle:before {
+    content: '▶';
+  }
+  
+  .tree-toggle.expanded:before {
+    content: '▼';
+  }
+  
+  .tree-toggle.leaf {
+    opacity: 0;
+    cursor: default;
+  }
+  
+  .tree-toggle.leaf:hover {
+    background: none;
+  }
+  
+  .tree-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    display: inline-block;
+    text-align: center;
+    font-size: 10px;
+    line-height: 16px;
+  }
+  
+  .tree-icon:before {
+    content: '📁';
+  }
+  
+  .tree-icon.leaf:before {
+    content: '📄';
+  }
+  
+  .tree-children {
+    margin-left: 16px;
+    border-left: 1px dotted #ccc;
+    padding-left: 8px;
+  }
+  
+  .tree-children.collapsed {
+    display: none;
+  }
+  
+  .tree-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .multiple-parent-indicator {
+    font-size: 10px;
+    color: #ff9800;
+    margin-left: 4px;
+    font-weight: bold;
+  }
+  
+  /* Forest component styling */
+  .component-header {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border: 1px solid #d1d8e0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 8px 0 4px 0;
+    font-weight: bold;
+    font-size: 11px;
+    color: #2c3e50;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .component-header:hover {
+    background: linear-gradient(135deg, #e8f4fd 0%, #b8d4f0 100%);
+    border-color: #1976d2;
+  }
+  
+  .component-header.collapsed {
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  
+  .component-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .component-stats {
+    font-size: 10px;
+    color: #666;
+    background: rgba(255,255,255,0.7);
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+  
+  .component-toggle {
+    font-size: 12px;
+    color: #666;
+    transition: transform 0.2s;
+  }
+  
+  .component-toggle.collapsed {
+    transform: rotate(-90deg);
+  }
+  
+  .component-tree {
+    margin-left: 8px;
+    border-left: 2px solid #e3f2fd;
+    padding-left: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .component-tree.collapsed {
+    display: none;
+  }
+  
+  /* Info button styling */
+  .node-info-btn {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 6px;
+    vertical-align: middle;
+    line-height: 14px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  
+  .node-info-btn:hover {
+    background: #1565c0;
+    transform: scale(1.1);
+  }
+  
+  .node-info-btn:active {
+    transform: scale(0.95);
+  }
+  
+  /* Node dropdown styles */
+  #node-dropdown {
+    position: absolute;
+    background: white;
+    border: 2px solid #1976d2;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 12px;
+    min-width: 200px;
+    max-width: 300px;
+    z-index: 1000;
+    display: none;
+    font-family: monospace;
+    font-size: 11px;
+  }
+  
+  #node-dropdown .dropdown-header {
+    font-weight: bold;
+    color: #1976d2;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  
+  #node-dropdown .dropdown-row {
+    margin: 4px 0;
+    word-wrap: break-word;
+  }
+  
+  #node-dropdown .dropdown-key {
+    color: #666;
+    font-weight: bold;
+  }
+  
+  #node-dropdown .dropdown-value {
+    color: #333;
+    margin-left: 8px;
+  }
+  
+  #node-dropdown .close-btn {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+  }
+  
+  #node-dropdown .close-btn:hover {
+    color: #666;
   }
 </style>
-<div id="svg-container">
-  <svg width="335" height="550" id="tree-view-svg"></svg>
-</div>
+
+
+  <div id="tree-container"></div>
+  <!-- Node data dropdown -->
+  <div id="node-dropdown">
+    <button class="close-btn" onclick="hideNodeDropdown()">×</button>
+    <div class="dropdown-header" id="dropdown-title">Node Details</div>
+    <div id="dropdown-content"></div>
+  </div>
+
+
+<script>
+  let isTreeGraphLoaded = false;
+  let observerActive = false;
+  let debounceTimer = null;
+  let forestData = null;
+  let expandedNodes = new Set();
+  
+  // Store node data globally for dropdown access
+  window.treeNodeData = new Map();
+  
+  function setupTreeViewObserver() {
+    if (observerActive) return; 
+    
+    const mainViewContainer = document.getElementById('main-view-graph');
+    if (!mainViewContainer) {
+      setTimeout(setupTreeViewObserver, 500);
+      return;
+    }
+    
+    observerActive = true;
+    
+    const observer = new MutationObserver((mutations) => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach(node => {
+            if (node.tagName === 'svg' || 
+                (node.querySelector && node.querySelector('svg')) ||
+                (node.classList && node.classList.contains('node'))) {
+              debounceTimer = setTimeout(renderNewTreeView, 1000);
+            }
+          });
+        }
+      });
+    });
+    
+    observer.observe(mainViewContainer, {
+      childList: true,
+      subtree: true,
+      attributes: false 
+    });
+    
+    setTimeout(() => {
+      if (!isTreeGraphLoaded) {
+        renderNewTreeView();
+      }
+    }, 2000);
+  }
+  
+  const renderNewTreeView = () => {
+    if (isTreeGraphLoaded) {
+      return;
+    }
+    
+    isTreeGraphLoaded = true;
+    
+    const mainViewContainer = document.getElementById('main-view-graph');
+    if (!mainViewContainer) {
+      isTreeGraphLoaded = false;
+      return;
+    }
+    
+    const mainViewSvg = mainViewContainer.querySelector('svg');
+    if (!mainViewSvg) {
+      isTreeGraphLoaded = false;
+      return;
+    }
+    
+    const d3Svg = d3.select(mainViewSvg);
+    const nodeElements = d3Svg.selectAll("g.node[enabled='true']").nodes();
+    const edgeElements = d3Svg.selectAll("path.link[enabled='true']").nodes();
+
+    const nodes = nodeElements.map((elem, index) => ({
+      id: elem.id,
+      data: elem.__data__.data || {},
+      element: elem
+    }));
+
+    console.log(nodes);
+
+    const edges = edgeElements.map((elem, index) => {
+      const data = elem.__data__;
+      return {
+        source: data?.source?.id || elem.getAttribute('data-source') || data?.source,
+        target: data?.target?.id || elem.getAttribute('data-target') || data?.target,
+        data: data || {}
+      };
+    });
+
+    const forest = buildTreeFromGraph(nodes, edges);
+    if (forest && forest.length > 0) {
+      forestData = forest;
+      renderForest(forest);
+      setTimeout(() => {
+        isTreeGraphLoaded = false; 
+      }, 5000); 
+    } else {
+      isTreeGraphLoaded = false;
+    }
+  }
+
+  function buildTreeFromGraph(nodes, edges) {
+    window.treeNodeData.clear();
+    
+    const nodeMap = new Map();
+    const parentMap = new Map(); // nodeId -> [parentIds]
+    const childrenMap = new Map(); // nodeId -> [childIds]
+    
+    nodes.forEach(node => {
+      nodeMap.set(node.id, node.data);
+      parentMap.set(node.id, []);
+      childrenMap.set(node.id, []);
+      
+      // Store node data for dropdown
+      window.treeNodeData.set(node.id, node.data);
+    });
+    
+    edges.forEach(edge => {
+      if (edge.source && edge.target && nodeMap.has(edge.source) && nodeMap.has(edge.target)) {
+        parentMap.get(edge.target).push(edge.source);
+        childrenMap.get(edge.source).push(edge.target);
+      }
+    });
+    
+    // Find connected components using DFS
+    const visited = new Set();
+    const components = [];
+    
+    function dfs(nodeId, component) {
+      if (visited.has(nodeId)) return;
+      visited.add(nodeId);
+      component.add(nodeId);
+      
+      // Visit all connected nodes (both parents and children)
+      const children = childrenMap.get(nodeId) || [];
+      const parents = parentMap.get(nodeId) || [];
+      
+      [...children, ...parents].forEach(connectedId => {
+        if (nodeMap.has(connectedId)) {
+          dfs(connectedId, component);
+        }
+      });
+    }
+    
+    // Find all connected components
+    nodes.forEach(node => {
+      if (!visited.has(node.id)) {
+        const component = new Set();
+        dfs(node.id, component);
+        components.push(component);
+      }
+    });
+    
+    function buildNodeStructure(nodeId, componentNodes) {
+      const nodeData = nodeMap.get(nodeId);
+      const shortName = nodeData?.id ? nodeData.id.replace('ID:http://example.org/', '') : nodeId;
+      const children = (childrenMap.get(nodeId) || []).filter(childId => componentNodes.has(childId));
+      const parents = (parentMap.get(nodeId) || []).filter(parentId => componentNodes.has(parentId));
+      const hasMultipleParents = parents.length > 1;
+      
+              const isRoot = parents.length === 0;
+        const shouldExpand = expandedNodes.has(nodeId);
+        
+        // Don't auto-expand root nodes - let user expand manually
+        
+        const nodeStructure = {
+          id: nodeId,
+          shortName: shortName,
+          fullData: nodeData,
+          children: children,
+          parents: parents,
+          hasMultipleParents: hasMultipleParents,
+          isLeaf: children.length === 0,
+          expanded: shouldExpand
+        };
+        
+        return nodeStructure;
+    }
+    
+    // Build forest structure - one tree per connected component
+    const forest = components.map((componentNodes, componentIndex) => {
+      const componentArray = Array.from(componentNodes);
+      
+      // Find root nodes in this component (nodes with no parents within the component)
+      const componentRoots = componentArray.filter(nodeId => {
+        const parents = parentMap.get(nodeId) || [];
+        return parents.filter(parentId => componentNodes.has(parentId)).length === 0;
+      });
+      
+      // If no clear roots (cycles), pick the first node as root
+      if (componentRoots.length === 0 && componentArray.length > 0) {
+        componentRoots.push(componentArray[0]);
+      }
+      
+      const componentStructure = componentArray.map(nodeId => 
+        buildNodeStructure(nodeId, componentNodes)
+      );
+      
+      return {
+        id: `component_${componentIndex}`,
+        name: `Component ${componentIndex + 1}`,
+        roots: componentRoots,
+        nodes: componentStructure,
+        nodeMap: new Map(componentStructure.map(node => [node.id, node])),
+        size: componentNodes.size
+      };
+    });
+    
+    // Sort components by size (largest first)
+    forest.sort((a, b) => b.size - a.size);
+    
+    return forest;
+  }
+  
+  // Component collapse state
+  const collapsedComponents = new Set();
+  
+  function renderForest(forest) {
+    const container = document.getElementById('tree-container');
+    container.innerHTML = '';
+    
+    if (forest.length === 0) {
+      container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666; font-style: italic;">No graph data available</div>';
+      return;
+    }
+    
+    forest.forEach((component, index) => {
+      // Create component header
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'component-header';
+      headerDiv.setAttribute('data-component-id', component.id);
+      
+      if (collapsedComponents.has(component.id)) {
+        headerDiv.classList.add('collapsed');
+      }
+      
+      // Component info
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'component-info';
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = component.name;
+      
+      const statsSpan = document.createElement('span');
+      statsSpan.className = 'component-stats';
+      statsSpan.textContent = `${component.size} nodes, ${component.roots.length} roots`;
+      
+      infoDiv.appendChild(nameSpan);
+      infoDiv.appendChild(statsSpan);
+      
+      // Toggle arrow
+      const toggleSpan = document.createElement('span');
+      toggleSpan.className = 'component-toggle';
+      toggleSpan.textContent = '▼';
+      if (collapsedComponents.has(component.id)) {
+        toggleSpan.classList.add('collapsed');
+      }
+      
+      headerDiv.appendChild(infoDiv);
+      headerDiv.appendChild(toggleSpan);
+      
+      // Header click handler
+      headerDiv.onclick = () => toggleComponent(component.id);
+      
+      container.appendChild(headerDiv);
+      
+      // Create component tree container
+      const treeDiv = document.createElement('div');
+      treeDiv.className = 'component-tree';
+      treeDiv.setAttribute('data-component-tree', component.id);
+      
+      if (collapsedComponents.has(component.id)) {
+        treeDiv.classList.add('collapsed');
+      }
+      
+      // Render trees for this component
+      renderComponentTree(component, treeDiv);
+      
+      container.appendChild(treeDiv);
+    });
+  }
+  
+  function renderComponentTree(component, containerElement) {
+    const hierarchyMap = component.nodeMap;
+    
+    // Track rendered nodes to prevent cycles and infinite recursion
+    const renderingPath = new Set();
+    const renderedInstances = new Map();
+    const MAX_DEPTH = 10;
+    const MAX_NODE_INSTANCES = 3;
+    
+    function renderNode(nodeData, depth = 0, pathFromRoot = []) {
+      const nodeDiv = document.createElement('div');
+      nodeDiv.className = 'tree-node';
+      nodeDiv.setAttribute('data-node-id', nodeData.id);
+      nodeDiv.style.paddingLeft = (depth * 16) + 'px';
+      
+      if (nodeData.hasMultipleParents) {
+        nodeDiv.classList.add('has-multiple-parents');
+      }
+      
+      // Add cycle indicator if this node appears earlier in the path
+      const isCyclic = pathFromRoot.includes(nodeData.id);
+      
+      // Toggle button
+      const toggle = document.createElement('button');
+      toggle.className = 'tree-toggle';
+      if (nodeData.isLeaf || isCyclic) {
+        toggle.classList.add('leaf');
+      } else if (nodeData.expanded) {
+        toggle.classList.add('expanded');
+      }
+      
+      // Direct click handler for toggle button
+      if (!nodeData.isLeaf && !isCyclic) {
+        toggle.onclick = (e) => {
+          e.stopPropagation();
+          toggleNode(nodeData.id);
+        };
+      }
+      
+      // Label
+      const label = document.createElement('span');
+      label.className = 'tree-label';
+      let labelText = nodeData.shortName + 
+        (nodeData.fullData?.age ? ` (${nodeData.fullData.age})` : '') + 
+        ` [${nodeData.children.length}]`;
+      
+      // Add cycle indicator
+      if (isCyclic) {
+        labelText += ' 🔄';
+      }
+      
+      label.textContent = labelText;
+      
+      // Multiple parent indicator
+      if (nodeData.hasMultipleParents) {
+        const indicator = document.createElement('span');
+        indicator.className = 'multiple-parent-indicator';
+        label.appendChild(indicator);
+      }
+      
+      // Info button
+      const infoBtn = document.createElement('button');
+      infoBtn.className = 'node-info-btn';
+      infoBtn.textContent = '+';
+      infoBtn.onclick = (e) => {
+        e.stopPropagation();
+        showNodeDropdown(nodeData.id, e);
+      };
+      
+      nodeDiv.appendChild(toggle);
+      nodeDiv.appendChild(label);
+      nodeDiv.appendChild(infoBtn);
+      
+      // Click handlers
+      nodeDiv.onclick = (e) => {
+        if (e.target === toggle && !nodeData.isLeaf && !isCyclic) {
+          e.stopPropagation();
+          toggleNode(nodeData.id);
+        } else if (e.target !== infoBtn) {
+          selectNode(nodeData.id);
+        }
+      };
+      
+      return nodeDiv;
+    }
+    
+    function renderChildren(nodeId, parentElement, depth, pathFromRoot = []) {
+      // Safety checks to prevent infinite recursion
+      if (depth > MAX_DEPTH) {
+        return;
+      }
+      
+      if (renderingPath.has(nodeId)) {
+        return;
+      }
+      
+      const nodeData = hierarchyMap.get(nodeId);
+      if (!nodeData || !nodeData.expanded) return;
+      
+      // Track this node in current rendering path
+      renderingPath.add(nodeId);
+      const currentPath = [...pathFromRoot, nodeId];
+      
+      const childrenContainer = document.createElement('div');
+      childrenContainer.className = 'tree-children';
+      
+      nodeData.children.forEach(childId => {
+        // Check if we're about to create a cycle
+        if (currentPath.includes(childId)) {
+          // Render a cycle indicator instead of recursing
+          const cycleDiv = document.createElement('div');
+          cycleDiv.className = 'tree-node';
+          cycleDiv.style.paddingLeft = ((depth + 1) * 16) + 'px';
+          cycleDiv.style.color = '#ff6b6b';
+          cycleDiv.style.fontStyle = 'italic';
+          cycleDiv.innerHTML = `<span class="tree-icon leaf"></span><span class="tree-label">↺ Cycle to ${hierarchyMap.get(childId)?.shortName || childId}</span>`;
+          childrenContainer.appendChild(cycleDiv);
+          return;
+        }
+        
+        // Limit instances of same node
+        const instanceCount = renderedInstances.get(childId) || 0;
+        if (instanceCount >= MAX_NODE_INSTANCES) {
+          const limitDiv = document.createElement('div');
+          limitDiv.className = 'tree-node';
+          limitDiv.style.paddingLeft = ((depth + 1) * 16) + 'px';
+          limitDiv.style.color = '#ff9800';
+          limitDiv.style.fontStyle = 'italic';
+          limitDiv.innerHTML = `<span class="tree-icon leaf"></span><span class="tree-label">... (max instances of ${hierarchyMap.get(childId)?.shortName || childId})</span>`;
+          childrenContainer.appendChild(limitDiv);
+          return;
+        }
+        
+        const childData = hierarchyMap.get(childId);
+        if (childData) {
+          // Track instance count
+          renderedInstances.set(childId, instanceCount + 1);
+          
+          const childElement = renderNode(childData, depth + 1, currentPath);
+          childrenContainer.appendChild(childElement);
+          
+          // Only recurse if not creating a cycle
+          if (!currentPath.includes(childId)) {
+            renderChildren(childId, childrenContainer, depth + 1, currentPath);
+          }
+        }
+      });
+      
+      // Remove from rendering path when done
+      renderingPath.delete(nodeId);
+      
+      if (childrenContainer.children.length > 0) {
+        parentElement.appendChild(childrenContainer);
+      }
+    }
+    
+    // Clear tracking data
+    renderingPath.clear();
+    renderedInstances.clear();
+    
+    // Render root nodes and their children for this component
+    component.roots.forEach(rootId => {
+      const rootData = hierarchyMap.get(rootId);
+      if (rootData) {
+        const rootElement = renderNode(rootData, 0, []);
+        containerElement.appendChild(rootElement);
+        // Only render children if the root is expanded
+        if (rootData.expanded) {
+          renderChildren(rootId, containerElement, 0, []);
+        }
+      }
+    });
+    
+    // Don't render additional instances of multiple-parent nodes initially
+    // They will be rendered when their parents are expanded
+  }
+  
+  function toggleComponent(componentId) {
+    if (collapsedComponents.has(componentId)) {
+      collapsedComponents.delete(componentId);
+    } else {
+      collapsedComponents.add(componentId);
+    }
+    
+    // Update header and tree visibility
+    const header = document.querySelector(`[data-component-id="${componentId}"]`);
+    const tree = document.querySelector(`[data-component-tree="${componentId}"]`);
+    const toggle = header?.querySelector('.component-toggle');
+    
+    if (collapsedComponents.has(componentId)) {
+      header?.classList.add('collapsed');
+      tree?.classList.add('collapsed');
+      toggle?.classList.add('collapsed');
+    } else {
+      header?.classList.remove('collapsed');
+      tree?.classList.remove('collapsed');
+      toggle?.classList.remove('collapsed');
+    }
+  }
+  
+  function toggleNode(nodeId) {
+    if (expandedNodes.has(nodeId)) {
+      expandedNodes.delete(nodeId);
+    } else {
+      expandedNodes.add(nodeId);
+    }
+    
+    // Update expanded state in forest data
+    if (forestData) {
+      forestData.forEach(component => {
+        component.nodes.forEach(node => {
+          node.expanded = expandedNodes.has(node.id);
+        });
+        // Update the nodeMap as well
+        component.nodeMap.forEach(node => {
+          node.expanded = expandedNodes.has(node.id);
+        });
+      });
+      
+      // Re-render the forest
+      renderForest(forestData);
+    }
+  }
+  
+  function selectNode(nodeId) {
+    // Remove previous selection
+    document.querySelectorAll('.tree-node.selected').forEach(node => {
+      node.classList.remove('selected');
+    });
+    
+    // Add selection to clicked node
+    const nodeElement = document.querySelector(`[data-node-id="${nodeId}"]`);
+    if (nodeElement) {
+      nodeElement.classList.add('selected');
+    }
+    
+    // Dispatch focus event
+    if (typeof dispatchNodeFocusEvent === 'function') {
+      dispatchNodeFocusEvent(nodeId);
+    }
+  }
+
+  window.showNodeDropdown = function(nodeId, event) {
+    event.stopPropagation();
+    
+    const dropdown = document.getElementById('node-dropdown');
+    const title = document.getElementById('dropdown-title');
+    const content = document.getElementById('dropdown-content');
+    
+    // Get node data
+    const nodeData = window.treeNodeData.get(nodeId) || {};
+    const shortName = nodeData?.id ? nodeData.id.replace('ID:http://example.org/', '') : nodeId;
+    
+    // Set title
+    title.textContent = shortName;
+    
+    // Build content
+    let html = '<div class="dropdown-row"><span class="dropdown-key">ID:</span><span class="dropdown-value">' + shortName + '</span></div>';
+    
+    if (Object.keys(nodeData).length > 0) {
+      Object.entries(nodeData).forEach(([key, value]) => {
+        if (key !== 'id' && value !== null && value !== undefined && value !== '') {
+          html += `<div class="dropdown-row">
+            <span class="dropdown-key">${key}:</span>
+            <span class="dropdown-value">${value}</span>
+          </div>`;
+        }
+      });
+    } else {
+      html += '<div class="dropdown-row"><span class="dropdown-value">No additional data available</span></div>';
+    }
+    
+    content.innerHTML = html;
+    
+    // Position dropdown near the clicked button
+    const button = event.target;
+    const treeContainer = document.getElementById('tree-container');
+    const containerRect = treeContainer.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+    
+    dropdown.style.display = 'block';
+    dropdown.style.left = Math.min(buttonRect.right - containerRect.left + 10, 50) + 'px';
+    dropdown.style.top = Math.max(buttonRect.top - containerRect.top - 10, 10) + 'px';
+    
+    // Hide dropdown when clicking outside
+    setTimeout(() => {
+      document.addEventListener('click', outsideClickHandler, true);
+    }, 100);
+  };
+
+  function hideNodeDropdown() {
+    const dropdown = document.getElementById('node-dropdown');
+    dropdown.style.display = 'none';
+    document.removeEventListener('click', outsideClickHandler, true);
+  }
+
+  // Make hideNodeDropdown globally available for close button
+  window.hideNodeDropdown = hideNodeDropdown;
+
+  function outsideClickHandler(event) {
+    const dropdown = document.getElementById('node-dropdown');
+    const treeContainer = document.getElementById('tree-container');
+    
+    if (!dropdown.contains(event.target) && !treeContainer.contains(event.target)) {
+      hideNodeDropdown();
+    }
+  }
+
+  // Setup observer when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupTreeViewObserver);
+  } else {
+    setupTreeViewObserver();
+  }
+  
+  // Backup setup
+  setTimeout(setupTreeViewObserver, 2000);
+</script>
