@@ -27,7 +27,6 @@ cliHelpBtn.onclick = () => {
     `      Example: create-edge --src 1 --tgt 2 --data '{\"weight\": 5}'\n` +
     `  delete-edge --src &lt;id&gt; --tgt &lt;id&gt;\n` +
     `  clear-graph\n` +
-    `  help` +
     `</pre>`;
   cliResult.className = "cli-modal-result";
 };
