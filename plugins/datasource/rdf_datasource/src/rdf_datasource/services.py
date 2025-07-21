@@ -62,9 +62,9 @@ class ProxyRdfGraph(RdfGraphAbstract): # Proxy
       if o not in node_map:
         age = None
         gender = None
-        for s, _, obj in self.rdf_graph.triples((o, EX.age, None)):
+        for o, _, obj in self.rdf_graph.triples((o, EX.age, None)):
           age = int(obj) if obj else None
-        for s, _, obj in self.rdf_graph.triples((o, EX.gender, None)):
+        for o, _, obj in self.rdf_graph.triples((o, EX.gender, None)):
           gender = obj
         data = {
           "name": o.split("/")[-1],
