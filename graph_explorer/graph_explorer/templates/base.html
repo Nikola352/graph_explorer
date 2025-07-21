@@ -18,6 +18,9 @@
   <script src="{% static 'js/remove_filter.js' %}"></script>
   <script src="{% static 'js/main_view.script.js'%}?{% now 'U' %}"></script>
 </head>
+{% include "error_modal.html" %}
 {% block body %}{% endblock body %}
+<script src="{% static 'js/error_modal.js' %}" defer></script>
+</body>
 
 </html>

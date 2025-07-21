@@ -13,16 +13,16 @@ function selectWorkspace(workspace_id) {
         return response
           .json()
           .then((errData) => {
-            console.error("Error:", errData.error || "Server error");
+            showErrorModal("Error:", errData.error || "Server error");
           })
           .catch((err) => {
-            console.error("Error:", err.error || "Server error");
+            showErrorModal("Error:", err.error || "Server error");
           });
       }
       location.reload();
     })
     .catch((error) => {
-      console.error("Error:", error);
+      showErrorModal("Error:", error || "Server error");
     });
 }
 
@@ -97,7 +97,8 @@ function loadDataSourceConfiguration(dataSourceId, existingConfig = {}) {
       }
     })
     .catch((error) => {
-      console.error("Error loading data source configuration:", error);
+      showErrorModal("Error loading data source configuration:", error);
+      //console.error("Error loading data source configuration:", error);
       hideDataSourceConfiguration();
     });
 }
@@ -125,7 +126,7 @@ function hideDataSourceConfiguration() {
   const container = document.getElementById("datasource-config-container");
   if (container) {
     const inputs = container.querySelectorAll("input");
-    inputs.forEach(input => {
+    inputs.forEach((input) => {
       input.removeAttribute("required");
     });
     container.style.display = "none";
@@ -340,16 +341,16 @@ function addWorkspaceFormSubmitListener() {
           return response
             .json()
             .then((errData) => {
-              console.error("Error:", errData.error || "Server error");
+              showErrorModal("Error:", errData.error || "Server error");
             })
             .catch((err) => {
-              console.error("Error:", err.error || "Server error");
+              showErrorModal("Error:", err.error || "Server error");
             });
         }
         location.reload();
       })
       .catch((error) => {
-        console.error("Error:", error);
+        showErrorModal("Error:", err.error || "Server error");
       });
   });
 }
@@ -368,10 +369,10 @@ function deleteWorkspace(workspace_id) {
         return response
           .json()
           .then((errData) => {
-            console.error("Error:", errData.error || "Server error");
+            showErrorModal("Error:", errData.error || "Server error");
           })
           .catch((err) => {
-            console.error("Error:", err.error || "Server error");
+            showErrorModal("Error:", err.error || "Server error");
           });
       }
 
@@ -384,9 +385,10 @@ function deleteWorkspace(workspace_id) {
       }
 
       console.log("Successfully deleted the workspace.");
+      showErrorModal("asdas");
     })
     .catch((error) => {
-      console.error("Error:", error);
+      showErrorModal("Error:", error || "Server error");
     });
 }
 
@@ -404,15 +406,15 @@ function refreshDataSource() {
         return response
           .json()
           .then((errData) => {
-            console.error("Error:", errData.error || "Server error");
+            showErrorModal("Error:", errData.error || "Server error");
           })
           .catch((err) => {
-            console.error("Error:", err.error || "Server error");
+            showErrorModal("Error:", err.error || "Server error");
           });
       }
       location.reload();
     })
     .catch((error) => {
-      console.error("Error:", error);
+      showErrorModal("Error:", error);
     });
 }
