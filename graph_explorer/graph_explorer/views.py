@@ -1,34 +1,21 @@
 import json
-from tkinter import NO
 
 from django.apps import apps
 from django.http import (HttpRequest, HttpResponse, HttpResponseNotAllowed,
                          JsonResponse)
 from django.shortcuts import redirect, render
-from django.views.decorators.csrf import csrf_protect, csrf_exempt
-import subprocess
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
 from core.application import Application
 from core.models.filter import Filter, FilterOperator
-from core.use_cases import workspaces
 from core.use_cases.graph_context import GraphContext
 from core.use_cases.workspaces import WorkspaceService
 from graph_explorer.commands import GraphCommandProcessor
-
-from io import StringIO
-import contextlib
-
-from api.models.node import Node
-from api.models.edge import Edge
-from graph_explorer.management.commands.graph_cli import process_graph_command
 
 
 def index(request):
     graph_context: GraphContext = apps.get_app_config(
         'graph_explorer').graph_context  # type: ignore
-
-    workspaces: WorkspaceService = apps.get_app_config(
-        'graph_explorer').workspace_service  # type: ignore
 
     core_app: Application = apps.get_app_config(
         'graph_explorer').core_app  # type: ignore
@@ -39,11 +26,14 @@ def index(request):
     context["filters"] = current_workspace.filters if current_workspace else [""]
     context["search_term"] = graph_context.search_term
     if current_workspace:
-        graph = graph_context._graph_repository.query_graph(current_workspace.id, [])
+        graph = graph_context._graph_repository.query_graph(
+            current_workspace.id, [])
         context["graph"] = graph
         context["current_workspace"] = current_workspace
-        context["graph_nodes"] = [ {"id": n.id, "data": n.data} for n in graph.get_nodes() ]
-        context["graph_edges"] = [ {"src": e.src.id, "tgt": e.target.id, "data": e.data} for e in graph.get_edges() ]
+        context["graph_nodes"] = [{"id": n.id, "data": n.data}
+                                  for n in graph.get_nodes()]
+        context["graph_edges"] = [
+            {"src": e.src.id, "tgt": e.target.id, "data": e.data} for e in graph.get_edges()]
     else:
         context["current_workspace"] = None
         context["graph_nodes"] = []
@@ -259,11 +249,20 @@ def data_source_config(request: HttpRequest) -> HttpResponse:
 
     return JsonResponse({"params": param_dicts})
 
-   
+
+def refresh_data_source(_: HttpRequest) -> HttpResponse:
+    graph_context: GraphContext = apps.get_app_config(
+        'graph_explorer').graph_context  # type: ignore
+
+    try:
+        graph_context.refresh_data_source()
+        return JsonResponse({"message": f"Successfully reloaded the data"})
+    except KeyError:
+        return JsonResponse({"error": f"No data source selected"}, status=400)
 
 
 @csrf_exempt
-def cli_command_view(request:HttpRequest) -> HttpResponse:
+def cli_command_view(request: HttpRequest) -> HttpResponse:
     """
     Handle CLI commands from web interface.
     """
@@ -275,8 +274,7 @@ def cli_command_view(request:HttpRequest) -> HttpResponse:
             data = json.loads(request.body)
             command = data.get('command')
             args = data.get('args', {})
-            
-            
+
             if not command:
                 return JsonResponse({
                     'success': False,
@@ -284,11 +282,12 @@ def cli_command_view(request:HttpRequest) -> HttpResponse:
                     'graph_nodes': [],
                     'graph_edges': []
                 })
-            
-            core_app: Application = apps.get_app_config('graph_explorer').core_app  # type: ignore
+
+            core_app: Application = apps.get_app_config(
+                'graph_explorer').core_app  # type: ignore
             graph_ctx = core_app.graph_context
             graph = graph_context.get_graph()
-            
+
             if not graph_context:
                 return JsonResponse({
                     'success': False,
@@ -296,28 +295,30 @@ def cli_command_view(request:HttpRequest) -> HttpResponse:
                     'graph_nodes': [],
                     'graph_edges': []
                 })
-            
+
             processor = GraphCommandProcessor()
             success, message = processor.execute_command(command, graph, args)
-            
+
             if success:
                 try:
                     graph_context.save_graph(graph)
                 except Exception as e:
                     success = False
                     message = f'Command succeeded but failed to save graph: {str(e)}'
-            
+
             graph = graph_context.get_graph()
-            graph_nodes = [{'id': node.id, 'data': node.data} for node in graph.get_nodes()]
-            graph_edges = [{'src': edge.src.id, 'target': edge.target.id, 'data': edge.data} for edge in graph.get_edges()]
-            
+            graph_nodes = [{'id': node.id, 'data': node.data}
+                           for node in graph.get_nodes()]
+            graph_edges = [{'src': edge.src.id, 'target': edge.target.id,
+                            'data': edge.data} for edge in graph.get_edges()]
+
             return JsonResponse({
                 'success': success,
                 'message': message,
                 'graph_nodes': graph_nodes,
                 'graph_edges': graph_edges
             })
-            
+
         except json.JSONDecodeError:
             return JsonResponse({
                 'success': False,
@@ -332,12 +333,10 @@ def cli_command_view(request:HttpRequest) -> HttpResponse:
                 'graph_nodes': [],
                 'graph_edges': []
             })
-    
+
     return JsonResponse({
         'success': False,
         'message': 'Only POST method allowed',
         'graph_nodes': [],
         'graph_edges': []
     })
-
-

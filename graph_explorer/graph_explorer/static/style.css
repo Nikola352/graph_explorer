@@ -216,6 +216,12 @@ a#create-workspace .material-symbols-outlined {
 #main-view-panel > div {
   flex-grow: 1;
 }
+
+#main-view-panel > .panel-heading {
+  display: flex;
+  justify-content: space-between;
+}
+
 .error-container {
   width: 100%;
   display: flex;
