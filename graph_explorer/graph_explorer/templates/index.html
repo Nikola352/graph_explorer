@@ -17,7 +17,12 @@
             <!--Edit workspace-->
             <a 
               class="link-button"
-              onclick='openWorkspaceForm({"id": {{ workspace.id }}, "name": "{{ workspace.name }}", "data_source": "{{ workspace.data_source_id }}"})'
+              onclick='openWorkspaceForm({
+                "id": {{ workspace.id }}, 
+                "name": "{{ workspace.name }}", 
+                "data_source": "{{ workspace.data_source_id }}", 
+                "data_source_config": {{ workspace.data_source_config }}
+              })'
             >
               <span class="material-symbols-outlined">settings</span></a>
             <!--Delete workspace-->
