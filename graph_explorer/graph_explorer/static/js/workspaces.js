@@ -384,8 +384,7 @@ function deleteWorkspace(workspace_id) {
         workspaceElement.remove();
       }
 
-      console.log("Successfully deleted the workspace.");
-      showErrorModal("asdas");
+      //console.log("Successfully deleted the workspace.");
     })
     .catch((error) => {
       showErrorModal("Error:", error || "Server error");

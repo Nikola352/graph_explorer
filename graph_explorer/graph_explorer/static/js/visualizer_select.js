@@ -13,15 +13,15 @@ function selectVisualizer(visualizer_id) {
         return response
           .json()
           .then((errData) => {
-            console.error("Error:", errData.error || "Server error");
+            showErrorModal("Error:", errData.error || "Server error");
           })
           .catch((err) => {
-            console.error("Error:", err.error || "Server error");
+            showErrorModal("Error:", err.error || "Server error");
           });
       }
       location.reload();
     })
     .catch((error) => {
-      console.error("Error:", error);
+      showErrorModal("Error:", error || "Server error");
     });
 }
