@@ -22,10 +22,21 @@ cliHelpBtn.onclick = () => {
     `<pre style="margin:0;font-size:1em;white-space:pre-wrap;">Graph CLI - commands:\n` +
     `  create-node --id &lt;id&gt; [--data '{json}']\n` +
     `      Example: create-node --id 1 --data '{\"name\": \"Test\"}'\n` +
+    `  update-node --id &lt;id&gt; [--data '{json}']\n` +
+    `      Example: update-node --id 1 --data '{\"name\": \"Updated\"}'\n` +
     `  delete-node --id &lt;id&gt;\n` +
+    `      Example: delete-node --id 1\n` +
     `  create-edge --src &lt;id&gt; --tgt &lt;id&gt; [--data '{json}']\n` +
     `      Example: create-edge --src 1 --tgt 2 --data '{\"weight\": 5}'\n` +
     `  delete-edge --src &lt;id&gt; --tgt &lt;id&gt;\n` +
+    `      Example: delete-edge --src 1 --tgt 2\n` +
+    `  update-edge --src &lt;id&gt; --tgt &lt;id&gt; [--data '{json}']\n` +
+    `      Example: update-edge --src 1 --tgt 2 --data '{\"weight\": 10}'\n` +
+    `  search --query &lt;query&gt;\n` +
+    `      Example: search --query John\n` +
+    `  filter --field &lt;field&gt; --operator &lt;operator&gt; --value &lt;value&gt;\n` +
+    `      Example: filter --field name --operator eq --value John\n` +
+    `  operators: eq (equal), neq (not equal), gt (greater than), gte (greater than or equal to), lt (less than), lte (less than or equal to)\n` +
     `  clear-graph\n` +
     `</pre>`;
   cliResult.className = "cli-modal-result";
@@ -60,20 +71,12 @@ function updateGraphInfo(nodes, edges) {
         .join("") || "<li><i>No edges</i></li>";
 }
 
-function showCliSuccess(result, nodes, edges) {
+function showCliSuccess(result, nodes, edges, is_update) {
   cliResult.innerHTML = '<span class="icon">✅</span> ' + result;
   cliResult.className = "cli-modal-result success";
-  if (nodes && edges) {
+  if (nodes && edges && is_update) {
     updateGraphInfo(nodes, edges);
   }
-  setTimeout(() => {
-    // Show skeleton loader before reloading
-    if (window.skeletonLoader) {
-      window.skeletonLoader.show();
-    }
-    cliModal.style.display = "none";
-    window.location.reload();
-  }, 900);
 }
 
 function showCliError(data) {
@@ -169,7 +172,7 @@ cliExecuteBtn.onclick = async () => {
     const data = await resp.json();
 
     if (data.success) {
-      showCliSuccess(data.message, data.graph_nodes, data.graph_edges);
+      showCliSuccess(data.message, data.graph_nodes, data.graph_edges, !commandString.includes("search") && !commandString.includes("filter"));
     } else {
       showCliError(data);
     }
