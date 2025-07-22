@@ -13,27 +13,27 @@ function removeFilter(field, operator, value) {
       "X-CSRFToken": csrfToken,
     },
     body: JSON.stringify({
-        field,
-        operator,
-        value
-    })
+      field,
+      operator,
+      value,
+    }),
   })
-  .then((response) => {
-    if (!response.ok){
+    .then((response) => {
+      if (!response.ok) {
         return response
           .json()
           .then((errData) => {
-            console.error("Error:", errData.error || "Server error");
+            showErrorModal(errData.error || "Server error");
           })
           .catch((err) => {
-            console.error("Error:", err.error || "Server error");
+            showErrorModal(err.error || "Server error");
           });
-    }
-    location.reload()
-  })
-  .catch((error) => {
-    console.log("Error:",  error)
-  })
+      }
+      location.reload();
+    })
+    .catch((error) => {
+      showErrorModal(error || "Server error");
+    });
 }
 
 function removeSearch(search_term) {
@@ -51,23 +51,23 @@ function removeSearch(search_term) {
       "X-CSRFToken": csrfToken,
     },
     body: JSON.stringify({
-        search_term
-    })
+      search_term,
+    }),
   })
-  .then((response) => {
-    if (!response.ok){
+    .then((response) => {
+      if (!response.ok) {
         return response
           .json()
           .then((errData) => {
-            console.error("Error:", errData.error || "Server error");
+            showErrorModal(errData.error || "Server error");
           })
           .catch((err) => {
-            console.error("Error:", err.error || "Server error");
+            showErrorModal(err.error || "Server error");
           });
-    }
-    location.reload()
-  })
-  .catch((error) => {
-    console.log("Error:",  error)
-  })
+      }
+      location.reload();
+    })
+    .catch((error) => {
+      showErrorModal(error || "Server error");
+    });
 }

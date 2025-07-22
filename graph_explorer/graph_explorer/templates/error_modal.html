@@ -1,0 +1,25 @@
+<div id="error-modal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" id="error-modal-close">&times;</span>
+    <div class="modal-title">⚠️ Error</div>
+    <div class="modal-body">
+      <span id="error-modal-message"></span>
+    </div>
+    <div class="modal-footer">
+      <button id="error-modal-ok" class="button">OK</button>
+    </div>
+  </div>
+</div>
+<style>
+  #error-modal.modal {
+    position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;
+  }
+  #error-modal .modal-content {
+    background: #fff; padding: 2rem; border-radius: 8px; min-width: 320px; max-width: 90vw;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.2); text-align: center; position: relative;
+  }
+  #error-modal .modal-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
+  #error-modal .close { position: absolute; right: 1.5rem; top: 1.5rem; font-size: 2rem; cursor: pointer; }
+  #error-modal .modal-footer { margin-top: 1.5rem; }
+</style>
