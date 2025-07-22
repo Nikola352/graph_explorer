@@ -1,4 +1,9 @@
 function selectWorkspace(workspace_id) {
+  // Show skeleton loader
+  if (window.skeletonLoader) {
+    window.skeletonLoader.show();
+  }
+  
   const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
   fetch("/select-workspace/", {
     method: "POST",
@@ -327,6 +332,11 @@ function addWorkspaceFormSubmitListener() {
       config,
     };
 
+    // Show skeleton loader
+    if (window.skeletonLoader) {
+      window.skeletonLoader.show();
+    }
+
     fetch(form.action, {
       method: workspace_id ? "PUT" : "POST",
       headers: {
@@ -355,6 +365,11 @@ function addWorkspaceFormSubmitListener() {
 }
 
 function deleteWorkspace(workspace_id) {
+  // Show skeleton loader
+  if (window.skeletonLoader) {
+    window.skeletonLoader.show();
+  }
+  
   const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
 
   fetch(`delete-workspace/${workspace_id}/`, {
@@ -391,6 +406,11 @@ function deleteWorkspace(workspace_id) {
 }
 
 function refreshDataSource() {
+  // Show skeleton loader
+  if (window.skeletonLoader) {
+    window.skeletonLoader.show();
+  }
+  
   const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
 
   fetch(`refresh-data-source/`, {
