@@ -10,6 +10,11 @@ document.addEventListener('DOMContentLoaded', function () {
 function handleFilterSubmit(e){
    e.preventDefault();
 
+    // Show skeleton loader
+    if (window.skeletonLoader) {
+      window.skeletonLoader.show();
+    }
+
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     const attribute = document.getElementById('filter-attribute-input').value;
     const operator = document.querySelector('select[name="operator"]').value;
@@ -50,6 +55,11 @@ function handleFilterSubmit(e){
         
 function handleSearchSubmit(e){
    e.preventDefault();
+
+    // Show skeleton loader
+    if (window.skeletonLoader) {
+      window.skeletonLoader.show();
+    }
 
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     const query = document.getElementById('search-input').value;

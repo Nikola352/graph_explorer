@@ -67,6 +67,10 @@ function showCliSuccess(result, nodes, edges) {
     updateGraphInfo(nodes, edges);
   }
   setTimeout(() => {
+    // Show skeleton loader before reloading
+    if (window.skeletonLoader) {
+      window.skeletonLoader.show();
+    }
     cliModal.style.display = "none";
     window.location.reload();
   }, 900);
