@@ -13,16 +13,16 @@ function selectWorkspace(workspace_id) {
         return response
           .json()
           .then((errData) => {
-            showErrorModal("Error:", errData.error || "Server error");
+            showErrorModal(errData.error || "Server error");
           })
           .catch((err) => {
-            showErrorModal("Error:", err.error || "Server error");
+            showErrorModal(err.error || "Server error");
           });
       }
       location.reload();
     })
     .catch((error) => {
-      showErrorModal("Error:", error || "Server error");
+      showErrorModal(error || "Server error");
     });
 }
 
@@ -97,7 +97,7 @@ function loadDataSourceConfiguration(dataSourceId, existingConfig = {}) {
       }
     })
     .catch((error) => {
-      showErrorModal("Error loading data source configuration:", error);
+      showErrorModal("Error loading data source configuration: " + error);
       //console.error("Error loading data source configuration:", error);
       hideDataSourceConfiguration();
     });
@@ -341,16 +341,16 @@ function addWorkspaceFormSubmitListener() {
           return response
             .json()
             .then((errData) => {
-              showErrorModal("Error:", errData.error || "Server error");
+              showErrorModal(errData.error || "Server error");
             })
             .catch((err) => {
-              showErrorModal("Error:", err.error || "Server error");
+              showErrorModal(err.error || "Server error");
             });
         }
         location.reload();
       })
       .catch((error) => {
-        showErrorModal("Error:", err.error || "Server error");
+        showErrorModal(error || "Server error");
       });
   });
 }
@@ -369,10 +369,10 @@ function deleteWorkspace(workspace_id) {
         return response
           .json()
           .then((errData) => {
-            showErrorModal("Error:", errData.error || "Server error");
+            showErrorModal(errData.error || "Server error");
           })
           .catch((err) => {
-            showErrorModal("Error:", err.error || "Server error");
+            showErrorModal(err.error || "Server error");
           });
       }
 
@@ -387,7 +387,7 @@ function deleteWorkspace(workspace_id) {
       //console.log("Successfully deleted the workspace.");
     })
     .catch((error) => {
-      showErrorModal("Error:", error || "Server error");
+      showErrorModal(error || "Server error");
     });
 }
 
@@ -405,15 +405,15 @@ function refreshDataSource() {
         return response
           .json()
           .then((errData) => {
-            showErrorModal("Error:", errData.error || "Server error");
+            showErrorModal(errData.error || "Server error");
           })
           .catch((err) => {
-            showErrorModal("Error:", err.error || "Server error");
+            showErrorModal(err.error || "Server error");
           });
       }
       location.reload();
     })
     .catch((error) => {
-      showErrorModal("Error:", error);
+      showErrorModal(error);
     });
 }

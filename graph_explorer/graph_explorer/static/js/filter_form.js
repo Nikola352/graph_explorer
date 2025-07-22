@@ -33,17 +33,17 @@ function handleFilterSubmit(e) {
         return response
           .json()
           .then((errData) => {
-            showErrorModal("Error:", errData.error || "Server error");
+            showErrorModal(errData.error || "Server error");
           })
           .catch((err) => {
-            showErrorModal("Error:", err.error || "Server error");
+            showErrorModal(err.error || "Server error");
           });
       }
       // console.log("Server responded with:", data);
       window.location.reload();
     })
     .catch((error) => {
-      showErrorModal("Error:", error || "Server error");
+      showErrorModal(error || "Server error");
     });
 }
 
@@ -71,6 +71,6 @@ function handleSearchSubmit(e) {
       window.location.reload();
     })
     .catch((error) => {
-      showErrorModal("Error:", error || "Server error");
+      showErrorModal(error || "Server error");
     });
 }

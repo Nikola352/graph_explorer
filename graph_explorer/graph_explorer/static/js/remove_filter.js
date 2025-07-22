@@ -18,16 +18,16 @@ function removeFilter(field, operator, value) {
         return response
           .json()
           .then((errData) => {
-            showErrorModal("Error:", errData.error || "Server error");
+            showErrorModal(errData.error || "Server error");
           })
           .catch((err) => {
-            showErrorModal("Error:", err.error || "Server error");
+            showErrorModal(err.error || "Server error");
           });
       }
       location.reload();
     })
     .catch((error) => {
-      showErrorModal("Error:", error || "Server error");
+      showErrorModal(error || "Server error");
     });
 }
 
@@ -49,15 +49,15 @@ function removeSearch(search_term) {
         return response
           .json()
           .then((errData) => {
-            showErrorModal("Error:", errData.error || "Server error");
+            showErrorModal(errData.error || "Server error");
           })
           .catch((err) => {
-            showErrorModal("Error:", err.error || "Server error");
+            showErrorModal(err.error || "Server error");
           });
       }
       location.reload();
     })
     .catch((error) => {
-      showErrorModal("Error:", error || "Server error");
+      showErrorModal(error || "Server error");
     });
 }
