@@ -80,6 +80,21 @@ class Command(BaseCommand):
         create_node_parser.add_argument('--data', type=str, default='{}', 
                                       help='Node data as JSON (use escaped format: \'{\\"name\\": \\"Test\\"}\')')
         
+        # Update node command
+        update_node_parser = subparsers.add_parser('update-node', help='Update a node')
+        update_node_parser.add_argument('--workspace', type=str, help='Workspace ID to use')
+        update_node_parser.add_argument('--id', type=str, required=True, help='Node ID')
+        update_node_parser.add_argument('--data', type=str, default='{}', 
+                                      help='Node data as JSON (use escaped format: \'{\\"name\\": \\"Test\\"}\')')
+        
+        # Update edge command
+        update_edge_parser = subparsers.add_parser('update-edge', help='Update an edge')
+        update_edge_parser.add_argument('--workspace', type=str, help='Workspace ID to use')
+        update_edge_parser.add_argument('--src', type=str, required=True, help='Source node ID')
+        update_edge_parser.add_argument('--tgt', type=str, required=True, help='Target node ID')
+        update_edge_parser.add_argument('--data', type=str, default='{}', 
+                                      help='Edge data as JSON (use escaped format: \'{\\"weight\\": 5}\')')
+        
         # Delete node command
         delete_node_parser = subparsers.add_parser('delete-node', help='Delete a node')
         delete_node_parser.add_argument('--workspace', type=str, help='Workspace ID to use')
@@ -98,6 +113,18 @@ class Command(BaseCommand):
         delete_edge_parser.add_argument('--workspace', type=str, help='Workspace ID to use')
         delete_edge_parser.add_argument('--src', type=str, required=True, help='Source node ID')
         delete_edge_parser.add_argument('--tgt', type=str, required=True, help='Target node ID')
+        
+        # Search command
+        search_parser = subparsers.add_parser('search', help='Search the graph')
+        search_parser.add_argument('--workspace', type=str, help='Workspace ID to use')
+        search_parser.add_argument('--query', type=str, required=True, help='Search query')
+        
+        # Filter command
+        filter_parser = subparsers.add_parser('filter', help='Filter the graph')
+        filter_parser.add_argument('--workspace', type=str, help='Workspace ID to use')
+        filter_parser.add_argument('--field', type=str, required=True, help='Field to filter')
+        filter_parser.add_argument('--operator', type=str, required=True, help='Filter operator')
+        filter_parser.add_argument('--value', type=str, required=True, help='Filter value')
         
         # Clear graph command
         clear_graph_parser = subparsers.add_parser('clear-graph', help='Clear all nodes and edges from the graph')

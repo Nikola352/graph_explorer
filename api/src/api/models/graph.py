@@ -1,9 +1,9 @@
 from api.models.edge import Edge
 from api.models.node import Node
 from typing import Optional, Set
+from api.models.data import OperatorMap
 
-
-class Graph:
+class Graph(OperatorMap):
     """
     A class representing a graph structure composed of nodes and edges.
 
@@ -32,10 +32,13 @@ class Graph:
         :return: Doesn't return anything but initializes `Graph` object.
         :rtype: None
         """
+        super().__init__()
         self.edges = edges if edges else set()
         self.nodes = nodes if nodes else set()
         self.directed = directed
         self.root_id = root_id
+        
+        
 
     def add_node(self, node: Node) -> None:
         """
@@ -94,6 +97,31 @@ class Graph:
                 if not self.directed and node == edge.target:
                     node.edges.append(reversed_edge)
 
+    def update_node(self, node: Node, data: dict) -> None:
+        """
+        Updates a `Node` in the graph.
+        """
+        if not isinstance(node, Node):
+            raise TypeError(
+                f"Expected a Node instance, got {type(node).__name__}")
+        for n in self.nodes:
+            if n.id == node.id:
+                n.data = data
+                break
+            
+    def update_edge(self, edge: Edge, data: dict) -> None:
+        """
+        Updates an `Edge` in the graph.
+        """
+        if not isinstance(edge, Edge):
+            raise TypeError(
+                f"Expected a Edge instance, got {type(edge).__name__}")
+        
+        for e in self.edges:
+            if e.src == edge.src and e.target == edge.target:
+                e.data = data
+                break
+
     def remove_edge(self, target_edge: Edge) -> None:
         """
         Removes an `Edge` to the graph.
@@ -118,7 +146,71 @@ class Graph:
                 if not self.directed and node == target_edge.target:
                     node.edges = [
                         edge for edge in node.edges if node != target_edge.target]
-
+                    
+    def search_nodes(self, query: str) -> Set[Node]:
+        """
+        Searches the graph for nodes containing the query string.
+        """
+        nodes = set()
+        for node in self.nodes:
+            for _, value in node.data.items():
+                if query in str(value):
+                    nodes.add(node)
+        return nodes
+    
+    def search_edges(self, query: str) -> Set[Edge]:
+        """
+        Searches the graph for edges containing the query string.
+        """
+        edges = set()
+        for edge in self.edges:
+            for _, value in edge.data.items():
+                if query in str(value):
+                    edges.add(edge)
+            for _, value in edge.src.data.items():
+                if query in str(value):
+                    edges.add(edge)
+            for _, value in edge.target.data.items():
+                if query in str(value):
+                    edges.add(edge)
+        return edges
+    
+    def filter_nodes(self, field: str, operator: str, param: str) -> Set[Node]:
+        """
+        Filters the graph for nodes containing the query string.
+        """
+        
+        if operator not in self.operator_map:
+            raise ValueError(f"Unknown operator: {operator}")
+        
+        operator_func = self.operator_map[operator]
+        nodes = set()
+        
+        for node in self.nodes:
+            if field in node.data and operator_func(node.data[field], type(node.data[field])(param)):
+                nodes.add(node)
+        return nodes
+    
+    def filter_edges(self, field: str, operator: str, param: str) -> Set[Edge]:
+        """
+        Filters the graph for edges containing the query string.
+        """
+        
+        if operator not in self.operator_map:
+            raise ValueError(f"Unknown operator: {operator}")
+        
+        operator_func = self.operator_map[operator]
+        edges = set()
+        
+        for edge in self.edges:
+            if field in edge.data and operator_func(edge.data[field], type(edge.data[field])(param)):
+                edges.add(edge)
+            if field in edge.src.data and operator_func(edge.src.data[field], type(edge.src.data[field])(param)):
+                edges.add(edge)
+            if field in edge.target.data and operator_func(edge.target.data[field], type(edge.target.data[field])(param)):
+                edges.add(edge)
+        return edges
+    
     def get_nodes(self) -> Set["Node"]:
         """
         Retrieves all nodes in the graph.

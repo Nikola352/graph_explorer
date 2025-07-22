@@ -28,10 +28,10 @@
 }
 #cli-modal textarea:focus { border: 1.5px solid #1a699e; outline: none; }
 #cli-modal .cli-modal-result {
-  min-height: 2.5em; max-height: 10em; overflow-y: auto; font-family: 'Fira Mono', monospace; font-size: 1.04em; background: #f7f7fa;
+  min-height: 2.5em; max-height: 40vh; overflow-y: auto; font-family: 'Fira Mono', monospace; font-size: 1.04em; background: #f7f7fa;
   border-radius: 7px; border: 1.2px solid #e0e0e0; padding: 0.7em 1em; color: #333; margin-bottom: 0.5em;
   transition: background 0.2s, color 0.2s;
-  display: flex; align-items: center; gap: 0.5em;
+  display: flex; align-items: flex-start; gap: 0.5em;
 }
 #cli-modal .cli-modal-result.success { background: #e8fbe8; color: #1a7f1a; border-color: #b6eab6; }
 #cli-modal .cli-modal-result.error { background: #fbeaea; color: #b30000; border-color: #f5b6b6; }
@@ -98,4 +98,5 @@
   </div>
 </div>
 
-<script src="{% static 'js/cli_modal.js' %}"></script>
+<!-- ... existing code ... -->
+<script src="{% static 'js/cli_modal.js' %}?{% now 'U' %}"></script>

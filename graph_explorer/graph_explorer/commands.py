@@ -57,7 +57,135 @@ class CreateNodeCommand(GraphCommand):
         node = Node(str(node_id), node_data)
         graph.add_node(node)
         return True, f'Node {node_id} created.'
+    
+class UpdateNodeCommand(GraphCommand):
+    """Command to update a node."""
+    
+    def execute(self, graph: Graph, args: Dict[str, Any]) -> Tuple[bool, str]:
+        """
+        Execute the update node command.
+        
+        :param graph: The graph object to operate on
+        :type graph: Graph
+        :param args: Dictionary containing 'id' and optional 'data' arguments
+        :type args: Dict[str, Any]
+        
+        :return: Tuple of success and message
+        :rtype: Tuple[bool, str]
+        """
+        node_id = args.get('id')
+        data_arg = args.get('data', '{}')
+        
+        if not node_id:
+            return False, 'Node ID is required.'
 
+        print("NODE ID", node_id)
+        node = next((n for n in graph.get_nodes() if n.id == str(node_id)), None)
+        if not node:
+            return False, f'Node {node_id} not found.'
+            
+        try:
+            node_data = json.loads(data_arg) if data_arg else {}
+        except Exception:
+            return False, f'Invalid JSON format: {data_arg}'
+            
+        graph.update_node(node, node_data)
+        return True, f'Node {node_id} updated.'
+    
+class UpdateEdgeCommand(GraphCommand):
+    """Command to update an edge."""
+    
+    def execute(self, graph: Graph, args: Dict[str, Any]) -> Tuple[bool, str]:
+        """
+        Execute the update edge command.
+        
+        :param graph: The graph object to operate on
+        :type graph: Graph
+        :param args: Dictionary containing 'src', 'tgt' and optional 'data' arguments
+        :type args: Dict[str, Any]
+        
+        :return: Tuple of success and message
+        :rtype: Tuple[bool, str]
+        """
+        src_id = args.get('src')
+        tgt_id = args.get('tgt')
+        data_arg = args.get('data', '{}')
+        
+        if not src_id or not tgt_id:
+            return False, 'Both source and target node IDs are required.'
+        
+        src = next((n for n in graph.get_nodes() if n.id == str(src_id)), None)
+        tgt = next((n for n in graph.get_nodes() if n.id == str(tgt_id)), None)
+        
+        print("SRC", src)
+        print("TGT", tgt)
+        
+        if not src or not tgt:
+            return False, 'Both nodes must exist.'
+        
+        edge = next((e for e in graph.get_edges() if e.src.id == str(src_id) and e.target.id == str(tgt_id)), None)
+        if not edge:
+            return False, f'Edge {src_id} -> {tgt_id} not found.'
+            
+        try:
+            edge_data = json.loads(data_arg) if data_arg else {}
+        except Exception:
+            return False, f'Invalid JSON format: {data_arg}'
+        
+        graph.update_edge(edge, edge_data)
+        return True, f'Edge {src_id} -> {tgt_id} updated.'
+    
+class SearchCommand(GraphCommand):
+    """Command to search the graph."""
+    
+    def execute(self, graph: Graph, args: Dict[str, Any]) -> Tuple[bool, str]:
+        """
+        Execute the search command.
+        
+        :param graph: The graph object to operate on
+        :type graph: Graph
+        :param args: Dictionary containing 'query' argument
+        :type args: Dict[str, Any]
+        
+        :return: Tuple of success and message
+        :rtype: Tuple[bool, str]
+        """
+        query = args.get('query')
+        if not query:
+            return False, 'Query is required.'
+        
+        nodes = graph.search_nodes(query)
+        edges = graph.search_edges(query)
+                
+        return True, f'Search query: {query}\nNodes: {nodes}\nEdges: {edges}'
+    
+class FilterCommand(GraphCommand):
+    """Command to filter the graph."""
+    
+    def execute(self, graph: Graph, args: Dict[str, Any]) -> Tuple[bool, str]:
+        """
+        Execute the filter command.
+        
+        :param graph: The graph object to operate on
+        :type graph: Graph
+        :param args: Dictionary containing 'field', 'operator' and 'value' arguments
+        :type args: Dict[str, Any]
+        
+        :return: Tuple of success and message
+        :rtype: Tuple[bool, str]
+        """
+        field = args.get('field')
+        operator = args.get('operator')
+        value = args.get('value')
+
+        if not field or not operator or not value:
+            return False, 'All filter parameters are required.'
+                    
+        nodes = graph.filter_nodes(field, operator, value)
+        edges = graph.filter_edges(field, operator, value)
+        
+        return True, f'Filtered nodes: {nodes}\nFiltered edges: {edges}'
+    
 
 class DeleteNodeCommand(GraphCommand):
     """Command to delete a node."""
@@ -193,6 +321,10 @@ class GraphCommandProcessor:
             'create-edge': CreateEdgeCommand(),
             'delete-edge': DeleteEdgeCommand(),
             'clear-graph': ClearGraphCommand(),
+            'update-node': UpdateNodeCommand(),
+            'update-edge': UpdateEdgeCommand(),
+            'search': SearchCommand(),
+            'filter': FilterCommand(),
         }
     
     def register_command(self, command_name: str, command: GraphCommand) -> None:
