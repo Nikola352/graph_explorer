@@ -1,4 +1,9 @@
 function removeFilter(field, operator, value) {
+  // Show skeleton loader
+  if (window.skeletonLoader) {
+    window.skeletonLoader.show();
+  }
+  
   const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
 
   fetch("/remove-filter/", {
@@ -32,6 +37,11 @@ function removeFilter(field, operator, value) {
 }
 
 function removeSearch(search_term) {
+  // Show skeleton loader
+  if (window.skeletonLoader) {
+    window.skeletonLoader.show();
+  }
+  
   const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
 
   fetch("/remove-search/", {
