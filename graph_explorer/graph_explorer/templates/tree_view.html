@@ -1,12 +1,14 @@
 <style>
-  /* Custom tree styling */
   #tree-container {
-    height: 100%;
-    width: 100%;
+    height: 45rem; 
+    width: 100%; 
     overflow: auto;
-    padding: 10px;
+    overflow-x: auto;
+    overflow-y: auto;
     position: relative;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    box-sizing: border-box;
+    min-height: 0; 
+    min-width: 0; 
   }
   
   .tree-node {
@@ -20,6 +22,9 @@
     white-space: nowrap;
     display: flex;
     align-items: center;
+    min-height: fit-content; 
+    width: fit-content; 
+    min-width: 200px; 
   }
   
   .tree-node:hover {
@@ -31,17 +36,12 @@
     color: #1976d2;
   }
   
-  .tree-node.has-multiple-parents {
-    border-left: 3px solid #ff9800;
-    padding-left: 8px;
-  }
-  
   .tree-toggle {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     margin-right: 4px;
     cursor: pointer;
-    font-size: 11px;
+    font-size: 10px;
     line-height: 16px;
     text-align: center;
     color: #666;
@@ -83,19 +83,12 @@
     font-size: 10px;
     line-height: 16px;
   }
-  
-  .tree-icon:before {
-    content: '📁';
-  }
-  
-  .tree-icon.leaf:before {
-    content: '📄';
-  }
-  
+    
   .tree-children {
-    margin-left: 16px;
+    margin-left: 12px;
     border-left: 1px dotted #ccc;
     padding-left: 8px;
+    min-width: max-content; 
   }
   
   .tree-children.collapsed {
@@ -104,29 +97,19 @@
   
   .tree-label {
     flex: 1;
-    overflow: hidden;
+    overflow: visible; 
     text-overflow: ellipsis;
+    word-wrap: break-word; 
+    max-width: none; 
+    min-height: fit-content; 
   }
-  
-  .multiple-parent-indicator {
-    font-size: 10px;
-    color: #ff9800;
-    margin-left: 4px;
-    font-weight: bold;
-  }
-  
-  /* Forest component styling */
+
   .component-header {
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border: 1px solid #d1d8e0;
     border-radius: 6px;
     padding: 8px 12px;
-    margin: 8px 0 4px 0;
     font-weight: bold;
     font-size: 11px;
-    color: #2c3e50;
-    cursor: pointer;
-    user-select: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -169,16 +152,17 @@
   
   .component-tree {
     margin-left: 8px;
-    border-left: 2px solid #e3f2fd;
+    border-left: 1px solid #e3f2fd;
     padding-left: 8px;
     margin-bottom: 12px;
+    min-width: max-content; 
+    width: fit-content; 
   }
   
   .component-tree.collapsed {
     display: none;
   }
   
-  /* Info button styling */
   .node-info-btn {
     display: inline-block;
     width: 16px;
@@ -206,7 +190,6 @@
     transform: scale(0.95);
   }
   
-  /* Node dropdown styles */
   #node-dropdown {
     position: absolute;
     background: white;
@@ -218,8 +201,7 @@
     max-width: 300px;
     z-index: 1000;
     display: none;
-    font-family: monospace;
-    font-size: 11px;
+    font-size: 10px;
   }
   
   #node-dropdown .dropdown-header {
@@ -228,7 +210,7 @@
     border-bottom: 1px solid #ddd;
     padding-bottom: 8px;
     margin-bottom: 8px;
-    font-size: 13px;
+    font-size: 10px;
   }
   
   #node-dropdown .dropdown-row {
@@ -248,8 +230,8 @@
   
   #node-dropdown .close-btn {
     position: absolute;
-    top: 4px;
-    right: 8px;
+    top: 2px;
+    right: 2px;
     background: none;
     border: none;
     font-size: 16px;
@@ -267,7 +249,6 @@
 
 
   <div id="tree-container"></div>
-  <!-- Node data dropdown -->
   <div id="node-dropdown">
     <button class="close-btn" onclick="hideNodeDropdown()">×</button>
     <div class="dropdown-header" id="dropdown-title">Node Details</div>
@@ -281,8 +262,8 @@
   let debounceTimer = null;
   let forestData = null;
   let expandedNodes = new Set();
+  let cyclicNodeCopies = new Map(); 
   
-  // Store node data globally for dropdown access
   window.treeNodeData = new Map();
   
   function setupTreeViewObserver() {
@@ -356,8 +337,6 @@
       element: elem
     }));
 
-    console.log(nodes);
-
     const edges = edgeElements.map((elem, index) => {
       const data = elem.__data__;
       return {
@@ -367,10 +346,9 @@
       };
     });
 
-    const forest = buildTreeFromGraph(nodes, edges);
-    if (forest && forest.length > 0) {
-      forestData = forest;
-      renderForest(forest);
+    forestData = buildTreeFromGraph(nodes, edges);
+    if (forestData) {
+      renderForest(forestData);
       setTimeout(() => {
         isTreeGraphLoaded = false; 
       }, 5000); 
@@ -381,17 +359,17 @@
 
   function buildTreeFromGraph(nodes, edges) {
     window.treeNodeData.clear();
+    cyclicNodeCopies.clear(); 
     
     const nodeMap = new Map();
-    const parentMap = new Map(); // nodeId -> [parentIds]
-    const childrenMap = new Map(); // nodeId -> [childIds]
+    const parentMap = new Map(); 
+    const childrenMap = new Map(); 
     
     nodes.forEach(node => {
       nodeMap.set(node.id, node.data);
       parentMap.set(node.id, []);
       childrenMap.set(node.id, []);
       
-      // Store node data for dropdown
       window.treeNodeData.set(node.id, node.data);
     });
     
@@ -402,7 +380,6 @@
       }
     });
     
-    // Find connected components using DFS
     const visited = new Set();
     const components = [];
     
@@ -411,7 +388,6 @@
       visited.add(nodeId);
       component.add(nodeId);
       
-      // Visit all connected nodes (both parents and children)
       const children = childrenMap.get(nodeId) || [];
       const parents = parentMap.get(nodeId) || [];
       
@@ -422,7 +398,6 @@
       });
     }
     
-    // Find all connected components
     nodes.forEach(node => {
       if (!visited.has(node.id)) {
         const component = new Set();
@@ -433,7 +408,6 @@
     
     function buildNodeStructure(nodeId, componentNodes) {
       const nodeData = nodeMap.get(nodeId);
-      const shortName = nodeData?.id ? nodeData.id.replace('ID:http://example.org/', '') : nodeId;
       const children = (childrenMap.get(nodeId) || []).filter(childId => componentNodes.has(childId));
       const parents = (parentMap.get(nodeId) || []).filter(parentId => componentNodes.has(parentId));
       const hasMultipleParents = parents.length > 1;
@@ -441,11 +415,8 @@
               const isRoot = parents.length === 0;
         const shouldExpand = expandedNodes.has(nodeId);
         
-        // Don't auto-expand root nodes - let user expand manually
-        
         const nodeStructure = {
           id: nodeId,
-          shortName: shortName,
           fullData: nodeData,
           children: children,
           parents: parents,
@@ -457,17 +428,14 @@
         return nodeStructure;
     }
     
-    // Build forest structure - one tree per connected component
     const forest = components.map((componentNodes, componentIndex) => {
       const componentArray = Array.from(componentNodes);
       
-      // Find root nodes in this component (nodes with no parents within the component)
       const componentRoots = componentArray.filter(nodeId => {
         const parents = parentMap.get(nodeId) || [];
         return parents.filter(parentId => componentNodes.has(parentId)).length === 0;
       });
       
-      // If no clear roots (cycles), pick the first node as root
       if (componentRoots.length === 0 && componentArray.length > 0) {
         componentRoots.push(componentArray[0]);
       }
@@ -477,262 +445,229 @@
       );
       
       return {
-        id: `component_${componentIndex}`,
-        name: `Component ${componentIndex + 1}`,
+        name: `Node Hierarchy`,
         roots: componentRoots,
         nodes: componentStructure,
         nodeMap: new Map(componentStructure.map(node => [node.id, node])),
         size: componentNodes.size
       };
     });
-    
-    // Sort components by size (largest first)
-    forest.sort((a, b) => b.size - a.size);
-    
-    return forest;
+  
+    return forest[0];
   }
   
-  // Component collapse state
   const collapsedComponents = new Set();
   
   function renderForest(forest) {
     const container = document.getElementById('tree-container');
     container.innerHTML = '';
     
-    if (forest.length === 0) {
-      container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666; font-style: italic;">No graph data available</div>';
-      return;
-    }
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'component-header';
+    headerDiv.setAttribute('data-component-id', forest.id);
     
-    forest.forEach((component, index) => {
-      // Create component header
-      const headerDiv = document.createElement('div');
-      headerDiv.className = 'component-header';
-      headerDiv.setAttribute('data-component-id', component.id);
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'component-info';
       
-      if (collapsedComponents.has(component.id)) {
-        headerDiv.classList.add('collapsed');
-      }
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = forest.name;
       
-      // Component info
-      const infoDiv = document.createElement('div');
-      infoDiv.className = 'component-info';
+    const statsSpan = document.createElement('span');
+    statsSpan.className = 'component-stats';
+    statsSpan.textContent = `${forest.size} nodes, ${forest.roots.length} roots`;
       
-      const nameSpan = document.createElement('span');
-      nameSpan.textContent = component.name;
+    infoDiv.appendChild(nameSpan);
+    infoDiv.appendChild(statsSpan);
       
-      const statsSpan = document.createElement('span');
-      statsSpan.className = 'component-stats';
-      statsSpan.textContent = `${component.size} nodes, ${component.roots.length} roots`;
+    const toggleSpan = document.createElement('span');
+    toggleSpan.className = 'component-toggle';
+    toggleSpan.textContent = '▼';
+    if (collapsedComponents.has(forest.id)) {
+      toggleSpan.classList.add('collapsed');
+    }
       
-      infoDiv.appendChild(nameSpan);
-      infoDiv.appendChild(statsSpan);
+    headerDiv.appendChild(infoDiv);
+    headerDiv.appendChild(toggleSpan);
       
-      // Toggle arrow
-      const toggleSpan = document.createElement('span');
-      toggleSpan.className = 'component-toggle';
-      toggleSpan.textContent = '▼';
-      if (collapsedComponents.has(component.id)) {
-        toggleSpan.classList.add('collapsed');
-      }
+    headerDiv.onclick = () => toggleComponent(forest.id);
       
-      headerDiv.appendChild(infoDiv);
-      headerDiv.appendChild(toggleSpan);
+    container.appendChild(headerDiv);
       
-      // Header click handler
-      headerDiv.onclick = () => toggleComponent(component.id);
+    const treeDiv = document.createElement('div');
+    treeDiv.className = 'component-tree';
+    treeDiv.setAttribute('data-component-tree', forest.id);
       
-      container.appendChild(headerDiv);
+    if (collapsedComponents.has(forest.id)) {
+      treeDiv.classList.add('collapsed');
+    }
       
-      // Create component tree container
-      const treeDiv = document.createElement('div');
-      treeDiv.className = 'component-tree';
-      treeDiv.setAttribute('data-component-tree', component.id);
+    renderComponentTree(forest, treeDiv);
       
-      if (collapsedComponents.has(component.id)) {
-        treeDiv.classList.add('collapsed');
-      }
-      
-      // Render trees for this component
-      renderComponentTree(component, treeDiv);
-      
-      container.appendChild(treeDiv);
-    });
+    container.appendChild(treeDiv);
+    
   }
   
   function renderComponentTree(component, containerElement) {
     const hierarchyMap = component.nodeMap;
     
-    // Track rendered nodes to prevent cycles and infinite recursion
-    const renderingPath = new Set();
     const renderedInstances = new Map();
-    const MAX_DEPTH = 10;
-    const MAX_NODE_INSTANCES = 3;
     
     function renderNode(nodeData, depth = 0, pathFromRoot = []) {
+      const isCyclic = pathFromRoot.includes(nodeData.id);
+      
+      let actualNodeData = nodeData;
+      let cyclicCopyKey = null;
+      
+      if (isCyclic) {
+        cyclicCopyKey = `${nodeData.id}_${pathFromRoot.join('-')}`;
+        
+        if (!cyclicNodeCopies.has(cyclicCopyKey)) {
+          const cyclicCopy = {
+            ...nodeData,
+            expanded: false, 
+            isCyclicCopy: true,
+            originalId: nodeData.id,
+            copyKey: cyclicCopyKey,
+            children: [...nodeData.children], 
+            parents: [...nodeData.parents], 
+            isLeaf: nodeData.children.length === 0 
+          };
+          cyclicNodeCopies.set(cyclicCopyKey, cyclicCopy);
+        }
+        
+        actualNodeData = cyclicNodeCopies.get(cyclicCopyKey);
+      }
+      
       const nodeDiv = document.createElement('div');
       nodeDiv.className = 'tree-node';
-      nodeDiv.setAttribute('data-node-id', nodeData.id);
+      nodeDiv.setAttribute('data-node-id', actualNodeData.id);
+      if (cyclicCopyKey) {
+        nodeDiv.setAttribute('data-cyclic-copy-key', cyclicCopyKey);
+      }
       nodeDiv.style.paddingLeft = (depth * 16) + 'px';
       
-      if (nodeData.hasMultipleParents) {
+      if (actualNodeData.hasMultipleParents) {
         nodeDiv.classList.add('has-multiple-parents');
       }
       
-      // Add cycle indicator if this node appears earlier in the path
-      const isCyclic = pathFromRoot.includes(nodeData.id);
-      
-      // Toggle button
       const toggle = document.createElement('button');
       toggle.className = 'tree-toggle';
-      if (nodeData.isLeaf || isCyclic) {
+      
+      const hasChildren = actualNodeData.children && actualNodeData.children.length > 0;
+      
+      if (!hasChildren) {
         toggle.classList.add('leaf');
-      } else if (nodeData.expanded) {
+      } else if (actualNodeData.expanded) {
         toggle.classList.add('expanded');
       }
       
-      // Direct click handler for toggle button
-      if (!nodeData.isLeaf && !isCyclic) {
+      if (hasChildren) {
         toggle.onclick = (e) => {
           e.stopPropagation();
-          toggleNode(nodeData.id);
+          if (cyclicCopyKey) {
+            toggleCyclicCopy(cyclicCopyKey);
+          } else {
+            toggleNode(actualNodeData.id);
+          }
         };
       }
       
-      // Label
       const label = document.createElement('span');
       label.className = 'tree-label';
-      let labelText = nodeData.shortName + ` [${nodeData.children.length}]`;
+      let labelText = actualNodeData.id + ` [${actualNodeData.children.length}]`;
       
-      // Add cycle indicator
       if (isCyclic) {
         labelText += ' 🔄';
       }
       
       label.textContent = labelText;
       
-      // Multiple parent indicator
-      if (nodeData.hasMultipleParents) {
+      if (actualNodeData.hasMultipleParents) {
         const indicator = document.createElement('span');
         indicator.className = 'multiple-parent-indicator';
         label.appendChild(indicator);
       }
       
-      // Info button
       const infoBtn = document.createElement('button');
       infoBtn.className = 'node-info-btn';
       infoBtn.textContent = '+';
       infoBtn.onclick = (e) => {
         e.stopPropagation();
-        showNodeDropdown(nodeData.id, e);
+        const nodeIdForInfo = actualNodeData.isCyclicCopy ? actualNodeData.originalId : actualNodeData.id;
+        showNodeDropdown(nodeIdForInfo, e);
       };
       
       nodeDiv.appendChild(toggle);
       nodeDiv.appendChild(label);
       nodeDiv.appendChild(infoBtn);
-      
-      // Click handlers
+
       nodeDiv.onclick = (e) => {
-        if (e.target === toggle && !nodeData.isLeaf && !isCyclic) {
+        if (e.target === toggle && hasChildren) {
           e.stopPropagation();
-          toggleNode(nodeData.id);
+          if (cyclicCopyKey) {
+            toggleCyclicCopy(cyclicCopyKey);
+          } else {
+            toggleNode(actualNodeData.id);
+          }
         } else if (e.target !== infoBtn) {
-          selectNode(nodeData.id);
+          const nodeIdForSelect = actualNodeData.isCyclicCopy ? actualNodeData.originalId : actualNodeData.id;
+          selectNode(nodeIdForSelect);
         }
       };
       
       return nodeDiv;
     }
     
-    function renderChildren(nodeId, parentElement, depth, pathFromRoot = []) {
-      // Safety checks to prevent infinite recursion
-      if (depth > MAX_DEPTH) {
-        return;
+    function renderChildren(nodeId, parentElement, depth, pathFromRoot = [], cyclicCopyKey = null) {
+      let nodeData;
+      
+      if (cyclicCopyKey) {
+        nodeData = cyclicNodeCopies.get(cyclicCopyKey);
+      } else {
+        nodeData = hierarchyMap.get(nodeId);
       }
       
-      if (renderingPath.has(nodeId)) {
-        return;
-      }
-      
-      const nodeData = hierarchyMap.get(nodeId);
       if (!nodeData || !nodeData.expanded) return;
-      
-      // Track this node in current rendering path
-      renderingPath.add(nodeId);
       const currentPath = [...pathFromRoot, nodeId];
       
       const childrenContainer = document.createElement('div');
       childrenContainer.className = 'tree-children';
       
       nodeData.children.forEach(childId => {
-        // Check if we're about to create a cycle
-        if (currentPath.includes(childId)) {
-          // Render a cycle indicator instead of recursing
-          const cycleDiv = document.createElement('div');
-          cycleDiv.className = 'tree-node';
-          cycleDiv.style.paddingLeft = ((depth + 1) * 16) + 'px';
-          cycleDiv.style.color = '#ff6b6b';
-          cycleDiv.style.fontStyle = 'italic';
-          cycleDiv.innerHTML = `<span class="tree-icon leaf"></span><span class="tree-label">↺ Cycle to ${hierarchyMap.get(childId)?.shortName || childId}</span>`;
-          childrenContainer.appendChild(cycleDiv);
-          return;
-        }
-        
-        // Limit instances of same node
-        const instanceCount = renderedInstances.get(childId) || 0;
-        if (instanceCount >= MAX_NODE_INSTANCES) {
-          const limitDiv = document.createElement('div');
-          limitDiv.className = 'tree-node';
-          limitDiv.style.paddingLeft = ((depth + 1) * 16) + 'px';
-          limitDiv.style.color = '#ff9800';
-          limitDiv.style.fontStyle = 'italic';
-          limitDiv.innerHTML = `<span class="tree-icon leaf"></span><span class="tree-label">... (max instances of ${hierarchyMap.get(childId)?.shortName || childId})</span>`;
-          childrenContainer.appendChild(limitDiv);
-          return;
-        }
-        
-        const childData = hierarchyMap.get(childId);
-        if (childData) {
-          // Track instance count
-          renderedInstances.set(childId, instanceCount + 1);
-          
-          const childElement = renderNode(childData, depth + 1, currentPath);
-          childrenContainer.appendChild(childElement);
-          
-          // Only recurse if not creating a cycle
-          if (!currentPath.includes(childId)) {
-            renderChildren(childId, childrenContainer, depth + 1, currentPath);
-          }
-        }
-      });
-      
-      // Remove from rendering path when done
-      renderingPath.delete(nodeId);
-      
-      if (childrenContainer.children.length > 0) {
-        parentElement.appendChild(childrenContainer);
+      const childData = hierarchyMap.get(childId);
+      if (childData) {
+      const childElement = renderNode(childData, depth + 1, currentPath);
+      childrenContainer.appendChild(childElement);
+            
+      const isChildCyclic = currentPath.includes(childId);
+      let childCyclicKey = null;
+            
+      if (isChildCyclic) {
+        childCyclicKey = `${childId}_${currentPath.join('-')}`;
       }
+            
+      renderChildren(childId, childrenContainer, depth + 1, currentPath, childCyclicKey);
+      }
+    });
+        
+    if (childrenContainer.children.length > 0) {
+      parentElement.appendChild(childrenContainer);
     }
+  }
     
-    // Clear tracking data
-    renderingPath.clear();
     renderedInstances.clear();
     
-    // Render root nodes and their children for this component
     component.roots.forEach(rootId => {
       const rootData = hierarchyMap.get(rootId);
       if (rootData) {
         const rootElement = renderNode(rootData, 0, []);
         containerElement.appendChild(rootElement);
-        // Only render children if the root is expanded
         if (rootData.expanded) {
-          renderChildren(rootId, containerElement, 0, []);
+          renderChildren(rootId, containerElement, 0, [], null); 
         }
       }
     });
     
-    // Don't render additional instances of multiple-parent nodes initially
-    // They will be rendered when their parents are expanded
   }
   
   function toggleComponent(componentId) {
@@ -742,7 +677,6 @@
       collapsedComponents.add(componentId);
     }
     
-    // Update header and tree visibility
     const header = document.querySelector(`[data-component-id="${componentId}"]`);
     const tree = document.querySelector(`[data-component-tree="${componentId}"]`);
     const toggle = header?.querySelector('.component-toggle');
@@ -765,36 +699,132 @@
       expandedNodes.add(nodeId);
     }
     
-    // Update expanded state in forest data
     if (forestData) {
-      forestData.forEach(component => {
-        component.nodes.forEach(node => {
+      forestData.nodes.forEach(node => {
           node.expanded = expandedNodes.has(node.id);
         });
-        // Update the nodeMap as well
-        component.nodeMap.forEach(node => {
+        forestData.nodeMap.forEach(node => {
           node.expanded = expandedNodes.has(node.id);
         });
-      });
+      }
       
-      // Re-render the forest
+      renderForest(forestData);
+    }
+  
+  function toggleCyclicCopy(cyclicCopyKey) {
+    const cyclicCopy = cyclicNodeCopies.get(cyclicCopyKey);
+    if (cyclicCopy) {
+      cyclicCopy.expanded = !cyclicCopy.expanded;
       renderForest(forestData);
     }
   }
+
+  function findNodeInForest(nodeId) {
+    if (!forestData || !forestData.nodeMap) return [];
+    
+    const nodeMap = forestData.nodeMap;
+    const startNode = nodeMap.get(nodeId);
+    
+    if (!startNode) return [];
+    
+    
+    function findPathBFS(targetNodeId) {
+      const queue = [[targetNodeId]];
+      const visited = new Set();
+      
+      while (queue.length > 0) {
+        const currentPath = queue.shift();
+        const currentNodeId = currentPath[currentPath.length - 1];
+        
+        if (visited.has(currentNodeId)) continue;
+        visited.add(currentNodeId);
+        
+        const currentNode = nodeMap.get(currentNodeId);
+        if (!currentNode) continue;
+        
+        if (currentNode.parents.length === 0) {
+          return currentPath.reverse();
+        }
+        
+        for (const parentId of currentNode.parents) {
+          if (!visited.has(parentId) && nodeMap.has(parentId)) {
+            queue.push([...currentPath, parentId]);
+          }
+        }
+      }
+      return [];
+    }
+    
+    function findPathToVisibleNode(targetNodeId) {
+      const queue = [[targetNodeId]];
+      const visited = new Set();
+      
+      while (queue.length > 0) {
+        const currentPath = queue.shift();
+        const currentNodeId = currentPath[currentPath.length - 1];
+        
+        if (visited.has(currentNodeId)) continue;
+        visited.add(currentNodeId);
+        
+        if (forestData.roots.includes(currentNodeId) || expandedNodes.has(currentNodeId)) {
+          return currentPath.reverse();
+        }
+        
+        const currentNode = nodeMap.get(currentNodeId);
+        if (!currentNode) continue;
+        
+        for (const parentId of currentNode.parents) {
+          if (!visited.has(parentId) && nodeMap.has(parentId)) {
+            queue.push([...currentPath, parentId]);
+          }
+        }
+      }
+      return [];
+    }
+    
+    let path = findPathBFS(nodeId);
+    
+    if (path.length === 0) {
+      path = findPathToVisibleNode(nodeId);
+    }
+    
+    if (path.length === 0 && forestData.roots.includes(nodeId)) {
+      path = [nodeId];
+    }
+    
+    return path;
+  }
   
   function selectNode(nodeId) {
-    // Remove previous selection
     document.querySelectorAll('.tree-node.selected').forEach(node => {
       node.classList.remove('selected');
     });
     
-    // Add selection to clicked node
     const nodeElement = document.querySelector(`[data-node-id="${nodeId}"]`);
     if (nodeElement) {
       nodeElement.classList.add('selected');
+    } else {
+      const pathToNode = findNodeInForest(nodeId);
+      if (pathToNode.length > 0) {
+        const targetNodeId = pathToNode[pathToNode.length - 1];
+        for (let i = 0; i < pathToNode.length - 1; i++) {
+          expandedNodes.add(pathToNode[i]);
+        }
+        if (forestData) {
+          forestData.nodeMap.forEach(node => {
+            node.expanded = expandedNodes.has(node.id);
+          });
+          renderForest(forestData);
+          setTimeout(() => {
+            const targetElement = document.querySelector(`[data-node-id="${targetNodeId}"]`);
+            if (targetElement) {
+              targetElement.classList.add('selected');
+            }
+          }, 100);
+        }
+      }
     }
     
-    // Dispatch focus event
     if (typeof dispatchNodeFocusEvent === 'function') {
       dispatchNodeFocusEvent(nodeId);
     }
@@ -807,15 +837,9 @@
     const title = document.getElementById('dropdown-title');
     const content = document.getElementById('dropdown-content');
     
-    // Get node data
     const nodeData = window.treeNodeData.get(nodeId) || {};
-    const shortName = nodeData?.id ? nodeData.id.replace('ID:http://example.org/', '') : nodeId;
     
-    // Set title
-    title.textContent = shortName;
-    
-    // Build content
-    let html = '<div class="dropdown-row"><span class="dropdown-key">ID:</span><span class="dropdown-value">' + shortName + '</span></div>';
+    let html = '<div class="dropdown-row"><span class="dropdown-key">ID:</span><span class="dropdown-value">' + nodeId + '</span></div>';
     
     if (Object.keys(nodeData).length > 0) {
       Object.entries(nodeData).forEach(([key, value]) => {
@@ -832,7 +856,6 @@
     
     content.innerHTML = html;
     
-    // Position dropdown near the clicked button
     const button = event.target;
     const treeContainer = document.getElementById('tree-container');
     const containerRect = treeContainer.getBoundingClientRect();
@@ -842,7 +865,6 @@
     dropdown.style.left = Math.min(buttonRect.right - containerRect.left + 10, 50) + 'px';
     dropdown.style.top = Math.max(buttonRect.top - containerRect.top - 10, 10) + 'px';
     
-    // Hide dropdown when clicking outside
     setTimeout(() => {
       document.addEventListener('click', outsideClickHandler, true);
     }, 100);
@@ -854,7 +876,6 @@
     document.removeEventListener('click', outsideClickHandler, true);
   }
 
-  // Make hideNodeDropdown globally available for close button
   window.hideNodeDropdown = hideNodeDropdown;
 
   function outsideClickHandler(event) {
@@ -866,13 +887,45 @@
     }
   }
 
-  // Setup observer when DOM is ready
+  function setupMainGraphClickListeners() {
+    const mainViewContainer = document.getElementById('main-view-graph');
+    if (!mainViewContainer) {
+      setTimeout(setupMainGraphClickListeners, 500);
+      return;
+    }
+    
+    const mainViewSvg = mainViewContainer.querySelector('svg');
+    if (!mainViewSvg) {
+      setTimeout(setupMainGraphClickListeners, 500);
+      return;
+    }
+    
+    mainViewSvg.addEventListener('click', function(event) {
+      let nodeElement = event.target;
+      
+      while (nodeElement && nodeElement !== mainViewSvg) {
+        if (nodeElement.classList && nodeElement.classList.contains('node') && nodeElement.id) {
+          selectNode(nodeElement.id);
+          break;
+        }
+        nodeElement = nodeElement.parentNode;
+      }
+    }, true); 
+    
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupTreeViewObserver);
+    document.addEventListener('DOMContentLoaded', function() {
+      setupTreeViewObserver();
+      setupMainGraphClickListeners();
+    });
   } else {
     setupTreeViewObserver();
+    setupMainGraphClickListeners();
   }
   
-  // Backup setup
-  setTimeout(setupTreeViewObserver, 2000);
+  setTimeout(function() {
+    setupTreeViewObserver();
+    setupMainGraphClickListeners();
+  }, 2000);
 </script>
