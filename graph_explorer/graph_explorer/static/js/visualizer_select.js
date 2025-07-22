@@ -1,4 +1,9 @@
 function selectVisualizer(visualizer_id) {
+  // Show skeleton loader
+  if (window.skeletonLoader) {
+    window.skeletonLoader.show();
+  }
+  
   const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
   fetch("/select-visualizer/", {
     method: "POST",
