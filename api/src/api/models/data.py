@@ -17,7 +17,7 @@ Supported data types are string, integer, float and datetime.
 
 class OperatorMap:
   def __init__(self):
-    self.operator_map = {
+    self.operators = {
             "eq": lambda a, b: a == b,
             "neq": lambda a, b: a != b,
             "gt": lambda a, b: a > b,
