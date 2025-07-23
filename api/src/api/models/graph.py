@@ -3,7 +3,7 @@ from api.models.node import Node
 from typing import Optional, Set
 from api.models.data import OperatorMap
 
-class Graph(OperatorMap):
+class Graph():
     """
     A class representing a graph structure composed of nodes and edges.
 
@@ -37,6 +37,7 @@ class Graph(OperatorMap):
         self.nodes = nodes if nodes else set()
         self.directed = directed
         self.root_id = root_id
+        self.operator_map = OperatorMap()
         
         
 
@@ -180,10 +181,10 @@ class Graph(OperatorMap):
         Filters the graph for nodes containing the query string.
         """
         
-        if operator not in self.operator_map:
+        if operator not in self.operator_map.operators:
             raise ValueError(f"Unknown operator: {operator}")
         
-        operator_func = self.operator_map[operator]
+        operator_func = self.operator_map.operators[operator]
         nodes = set()
         
         for node in self.nodes:
@@ -196,10 +197,10 @@ class Graph(OperatorMap):
         Filters the graph for edges containing the query string.
         """
         
-        if operator not in self.operator_map:
+        if operator not in self.operator_map.operators:
             raise ValueError(f"Unknown operator: {operator}")
         
-        operator_func = self.operator_map[operator]
+        operator_func = self.operator_map.operators[operator]
         edges = set()
         
         for edge in self.edges:
