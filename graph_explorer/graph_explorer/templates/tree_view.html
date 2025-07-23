@@ -799,10 +799,24 @@
     document.querySelectorAll('.tree-node.selected').forEach(node => {
       node.classList.remove('selected');
     });
+
+  function tryScrollToNode(nodeId, attempts = 10) {
+    const targetElement = document.querySelector(`[data-node-id="${nodeId}"]`);
+    if (targetElement) {
+      targetElement.classList.add('selected');
+      targetElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center'
+      });
+    } else if (attempts > 0) {
+      setTimeout(() => tryScrollToNode(nodeId, attempts - 1), 100);
+    }
+  }
     
     const nodeElement = document.querySelector(`[data-node-id="${nodeId}"]`);
     if (nodeElement) {
-      nodeElement.classList.add('selected');
+      tryScrollToNode(nodeId)
     } else {
       const pathToNode = findNodeInForest(nodeId);
       if (pathToNode.length > 0) {
@@ -815,12 +829,7 @@
             node.expanded = expandedNodes.has(node.id);
           });
           renderForest(forestData);
-          setTimeout(() => {
-            const targetElement = document.querySelector(`[data-node-id="${targetNodeId}"]`);
-            if (targetElement) {
-              targetElement.classList.add('selected');
-            }
-          }, 100);
+          tryScrollToNode(targetNodeId);
         }
       }
     }
@@ -887,45 +896,20 @@
     }
   }
 
-  function setupMainGraphClickListeners() {
-    const mainViewContainer = document.getElementById('main-view-graph');
-    if (!mainViewContainer) {
-      setTimeout(setupMainGraphClickListeners, 500);
-      return;
-    }
-    
-    const mainViewSvg = mainViewContainer.querySelector('svg');
-    if (!mainViewSvg) {
-      setTimeout(setupMainGraphClickListeners, 500);
-      return;
-    }
-    
-    mainViewSvg.addEventListener('click', function(event) {
-      let nodeElement = event.target;
-      
-      while (nodeElement && nodeElement !== mainViewSvg) {
-        if (nodeElement.classList && nodeElement.classList.contains('node') && nodeElement.id) {
-          selectNode(nodeElement.id);
-          break;
-        }
-        nodeElement = nodeElement.parentNode;
-      }
-    }, true); 
-    
-  }
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
       setupTreeViewObserver();
-      setupMainGraphClickListeners();
     });
   } else {
     setupTreeViewObserver();
-    setupMainGraphClickListeners();
   }
   
   setTimeout(function() {
     setupTreeViewObserver();
-    setupMainGraphClickListeners();
   }, 2000);
+
+  document.addEventListener("node-focus", (e) => {
+    const nodeId = e.detail;
+    selectNode(nodeId);
+  });
 </script>
