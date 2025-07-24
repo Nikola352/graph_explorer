@@ -357,6 +357,30 @@
     }
   }
 
+  function buildNodeStructure(nodeId, componentNodes, nodeMap, childrenMap, parentMap) {
+    const nodeData = nodeMap.get(nodeId);
+    const children = (childrenMap.get(nodeId) || []).filter(childId => componentNodes.has(childId));
+    const parents = (parentMap.get(nodeId) || []).filter(parentId => componentNodes.has(parentId));
+    const hasMultipleParents = parents.length > 1;
+    
+    const isRoot = parents.length === 0;
+    const shouldExpand = expandedNodes.has(nodeId);
+    const isLeaf = children.length === 0;
+      
+    const nodeStructure = {
+        id: nodeId,
+        fullData: nodeData,
+        children: children,
+        parents: parents,
+        hasMultipleParents: hasMultipleParents,
+        isLeaf: isLeaf,
+        expanded: shouldExpand,
+        isRoot: isRoot
+      };
+      
+      return nodeStructure;
+  }
+
   function buildTreeFromGraph(nodes, edges) {
     window.treeNodeData.clear();
     cyclicNodeCopies.clear(); 
@@ -405,56 +429,34 @@
         components.push(component);
       }
     });
-    
-    function buildNodeStructure(nodeId, componentNodes) {
-      const nodeData = nodeMap.get(nodeId);
-      const children = (childrenMap.get(nodeId) || []).filter(childId => componentNodes.has(childId));
-      const parents = (parentMap.get(nodeId) || []).filter(parentId => componentNodes.has(parentId));
-      const hasMultipleParents = parents.length > 1;
-      
-              const isRoot = parents.length === 0;
-        const shouldExpand = expandedNodes.has(nodeId);
-        
-        const nodeStructure = {
-          id: nodeId,
-          fullData: nodeData,
-          children: children,
-          parents: parents,
-          hasMultipleParents: hasMultipleParents,
-          isLeaf: children.length === 0,
-          expanded: shouldExpand
-        };
-        
-        return nodeStructure;
-    }
-    
-    const forest = components.map((componentNodes, componentIndex) => {
-      const componentArray = Array.from(componentNodes);
-      
-      const componentRoots = componentArray.filter(nodeId => {
-        const parents = parentMap.get(nodeId) || [];
-        return parents.filter(parentId => componentNodes.has(parentId)).length === 0;
-      });
-      
-      if (componentRoots.length === 0 && componentArray.length > 0) {
-        componentRoots.push(componentArray[0]);
+
+    const componentRoots = [];
+    const componentNodes = [];
+
+    const componentStructure = components.map(component => {
+      for (const node of component) {
+        const parents = parentMap.get(node) || [];
+        const nodeStructure = buildNodeStructure(node, component, nodeMap, childrenMap, parentMap);
+        if (parents.filter(parentId => component.has(parentId)).length === 0) {
+          componentRoots.push(nodeStructure);
+        }
+        componentNodes.push(nodeStructure);
       }
-      
-      const componentStructure = componentArray.map(nodeId => 
-        buildNodeStructure(nodeId, componentNodes)
-      );
-      
-      return {
+    });
+
+    const forest = {
         name: `Node Hierarchy`,
         roots: componentRoots,
-        nodes: componentStructure,
-        nodeMap: new Map(componentStructure.map(node => [node.id, node])),
-        size: componentNodes.size
+        nodes: componentNodes,
+        nodeMap: new Map(componentNodes.map(node => [node.id, node])),
+        size: componentNodes.length
       };
-    });
+    
   
-    return forest[0];
+    return forest;
   }
+
+  
   
   const collapsedComponents = new Set();
   
@@ -636,17 +638,17 @@
       nodeData.children.forEach(childId => {
       const childData = hierarchyMap.get(childId);
       if (childData) {
-      const childElement = renderNode(childData, depth + 1, currentPath);
-      childrenContainer.appendChild(childElement);
-            
-      const isChildCyclic = currentPath.includes(childId);
-      let childCyclicKey = null;
-            
-      if (isChildCyclic) {
-        childCyclicKey = `${childId}_${currentPath.join('-')}`;
-      }
-            
-      renderChildren(childId, childrenContainer, depth + 1, currentPath, childCyclicKey);
+        const childElement = renderNode(childData, depth + 1, currentPath);
+        childrenContainer.appendChild(childElement);
+              
+        const isChildCyclic = currentPath.includes(childId);
+        let childCyclicKey = null;
+              
+        if (isChildCyclic) {
+          childCyclicKey = `${childId}_${currentPath.join('-')}`;
+        }
+              
+        renderChildren(childId, childrenContainer, depth + 1, currentPath, childCyclicKey);
       }
     });
         
@@ -657,13 +659,13 @@
     
     renderedInstances.clear();
     
-    component.roots.forEach(rootId => {
-      const rootData = hierarchyMap.get(rootId);
+    component.roots.forEach(root => {
+      const rootData = hierarchyMap.get(root.id);
       if (rootData) {
         const rootElement = renderNode(rootData, 0, []);
         containerElement.appendChild(rootElement);
         if (rootData.expanded) {
-          renderChildren(rootId, containerElement, 0, [], null); 
+          renderChildren(root.id, containerElement, 0, [], null); 
         }
       }
     });
