@@ -1,7 +1,6 @@
 from api.models.edge import Edge
 from api.models.node import Node
 from typing import Optional, Set
-from api.models.data import OperatorMap
 
 class Graph():
     """
@@ -37,7 +36,6 @@ class Graph():
         self.nodes = nodes if nodes else set()
         self.directed = directed
         self.root_id = root_id
-        self.operator_map = OperatorMap()
         
         
 
@@ -148,70 +146,6 @@ class Graph():
                     node.edges = [
                         edge for edge in node.edges if node != target_edge.target]
                     
-    def search_nodes(self, query: str) -> Set[Node]:
-        """
-        Searches the graph for nodes containing the query string.
-        """
-        nodes = set()
-        for node in self.nodes:
-            for _, value in node.data.items():
-                if query in str(value):
-                    nodes.add(node)
-        return nodes
-    
-    def search_edges(self, query: str) -> Set[Edge]:
-        """
-        Searches the graph for edges containing the query string.
-        """
-        edges = set()
-        for edge in self.edges:
-            for _, value in edge.data.items():
-                if query in str(value):
-                    edges.add(edge)
-            for _, value in edge.src.data.items():
-                if query in str(value):
-                    edges.add(edge)
-            for _, value in edge.target.data.items():
-                if query in str(value):
-                    edges.add(edge)
-        return edges
-    
-    def filter_nodes(self, field: str, operator: str, param: str) -> Set[Node]:
-        """
-        Filters the graph for nodes containing the query string.
-        """
-        
-        if operator not in self.operator_map.operators:
-            raise ValueError(f"Unknown operator: {operator}")
-        
-        operator_func = self.operator_map.operators[operator]
-        nodes = set()
-        
-        for node in self.nodes:
-            if field in node.data and operator_func(node.data[field], type(node.data[field])(param)):
-                nodes.add(node)
-        return nodes
-    
-    def filter_edges(self, field: str, operator: str, param: str) -> Set[Edge]:
-        """
-        Filters the graph for edges containing the query string.
-        """
-        
-        if operator not in self.operator_map.operators:
-            raise ValueError(f"Unknown operator: {operator}")
-        
-        operator_func = self.operator_map.operators[operator]
-        edges = set()
-        
-        for edge in self.edges:
-            if field in edge.data and operator_func(edge.data[field], type(edge.data[field])(param)):
-                edges.add(edge)
-            if field in edge.src.data and operator_func(edge.src.data[field], type(edge.src.data[field])(param)):
-                edges.add(edge)
-            if field in edge.target.data and operator_func(edge.target.data[field], type(edge.target.data[field])(param)):
-                edges.add(edge)
-        return edges
-    
     def get_nodes(self) -> Set["Node"]:
         """
         Retrieves all nodes in the graph.

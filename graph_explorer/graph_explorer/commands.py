@@ -2,6 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Any, Dict
 import json
 from api.models.graph import Graph
+from core.models.filter import Filter
+from core.models.filterOperator import FilterOperator
+from django.apps import apps
+from core.use_cases.graph_context import GraphContext
 
 
 class GraphCommand(ABC):
@@ -154,10 +158,12 @@ class SearchCommand(GraphCommand):
         if not query:
             return False, 'Query is required.'
         
-        nodes = graph.search_nodes(query)
-        edges = graph.search_edges(query)
-                
-        return True, f'Search query: {query}\nNodes: {nodes}\nEdges: {edges}'
+        graph_context: GraphContext = apps.get_app_config(
+        'graph_explorer').graph_context
+        
+        graph_context.search_term = query
+        
+        return True, f'Search query: {query}'
     
 class FilterCommand(GraphCommand):
     """Command to filter the graph."""
@@ -174,6 +180,9 @@ class FilterCommand(GraphCommand):
         :return: Tuple of success and message
         :rtype: Tuple[bool, str]
         """
+        graph_context: GraphContext = apps.get_app_config(
+        'graph_explorer').graph_context
+        
         field = args.get('field')
         operator = args.get('operator')
         value = args.get('value')
@@ -181,10 +190,10 @@ class FilterCommand(GraphCommand):
         if not field or not operator or not value:
             return False, 'All filter parameters are required.'
                     
-        nodes = graph.filter_nodes(field, operator, value)
-        edges = graph.filter_edges(field, operator, value)
+        filter = Filter(field=field, operator=FilterOperator(operator), value=value)
+        graph_context.add_filter(filter)
         
-        return True, f'Filtered nodes: {nodes}\nFiltered edges: {edges}'
+        return True, f'Filter added: {filter}'
     
 
 class DeleteNodeCommand(GraphCommand):
