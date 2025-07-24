@@ -94,8 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleNodeFocus(nodeId) {
     d3.selectAll(".active-node")
-      .select("circle")
-      .style("fill", "white")
+      .selectAll("*:not(text)")
       .style("stroke", "#04446fff")
       .style("stroke-width", "1.5px");
     d3.selectAll(".active-node").classed("active-node", false);
@@ -103,8 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const focusedNode = g.selectAll(".node").filter((d) => d.id === nodeId);
     focusedNode.classed("active-node", true);
     focusedNode
-      .select("circle")
-      .style("fill", "white")
+      .selectAll("*:not(text)")
       .style("stroke", "#04446fff")
       .style("stroke-width", "4px");
     focusedNode.select("text").style("fill", "#04446fff");
