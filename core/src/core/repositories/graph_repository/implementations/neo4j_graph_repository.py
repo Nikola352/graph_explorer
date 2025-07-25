@@ -8,10 +8,12 @@ from api.models.edge import Edge
 from api.models.graph import Graph
 from api.models.node import Node
 from core.models.filter import Filter
+from core.repositories.graph_repository.interfaces.base_graph_repository import \
+    BaseGraphRepository
 from neo4j import GraphDatabase, ManagedTransaction, Query, Result
 
 
-class GraphRepository(object):
+class Neo4JGraphRepository(BaseGraphRepository):
     """
     Class responsible for storing and retrieving graph data from a Neo4j database.
     """
@@ -249,4 +251,3 @@ def _parse_value(value: Any) -> Any:
     else:
         # Ignore or raise if unsupported
         return str(value)
-
