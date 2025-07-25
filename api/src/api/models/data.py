@@ -15,13 +15,3 @@ Dictionary containing arbitrary data to be saved inside a Node or Edge.
 Supported data types are string, integer, float and datetime.
 """
 
-class OperatorMap:
-  def __init__(self):
-    self.operators = {
-            "eq": lambda a, b: a == b,
-            "neq": lambda a, b: a != b,
-            "gt": lambda a, b: a > b,
-            "gte": lambda a, b: a >= b,
-            "lt": lambda a, b: a < b,
-            "lte": lambda a, b: a <= b
-        }

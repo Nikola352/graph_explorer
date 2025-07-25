@@ -77,6 +77,10 @@ function showCliSuccess(result, nodes, edges, is_update) {
   if (nodes && edges && is_update) {
     updateGraphInfo(nodes, edges);
   }
+  setTimeout(() => {
+    cliModal.style.display = "none";
+    window.location.reload();
+  }, 1000);
 }
 
 function showCliError(data) {
