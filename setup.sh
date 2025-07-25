@@ -19,13 +19,12 @@ cp ./core/src/core/.example.env ./core/src/core/.env
 
 # Check for port argument and run server
 if [ "$#" -ge 1 ]; then
-    # If first argument is a number (port), use it
     if [[ $1 =~ ^[0-9]+$ ]]; then
-        python ./graph_explorer/manage.py runserver "$1"
+        python ./graph_explorer/manage.py runserver 0.0.0.0:$1
     else
-        echo "Warning: First argument should be a port number. Using default port."
-        python ./graph_explorer/manage.py runserver
+        echo "Warning: First argument should be a port number. Using default port (8000)."
+        python ./graph_explorer/manage.py runserver 0.0.0.0:8000
     fi
 else
-    python ./graph_explorer/manage.py runserver
+    python ./graph_explorer/manage.py runserver 0.0.0.0:8000  # Default port 8000
 fi
