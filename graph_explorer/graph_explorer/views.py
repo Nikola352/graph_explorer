@@ -10,7 +10,7 @@ from core.application import Application
 from core.models.filter import Filter, FilterOperator
 from core.use_cases.graph_context import GraphContext
 from core.use_cases.workspaces import WorkspaceService
-from graph_explorer.commands import GraphCommandProcessor
+from core.use_cases.commands import GraphCommandProcessor
 
 
 def index(request):
@@ -287,7 +287,7 @@ def cli_command_view(request: HttpRequest) -> HttpResponse:
                 'graph_explorer').core_app  # type: ignore
             graph_ctx = core_app.graph_context
             graph = graph_context.get_graph()
-
+            
             if not graph_context:
                 return JsonResponse({
                     'success': False,

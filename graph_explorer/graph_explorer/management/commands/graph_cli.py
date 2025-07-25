@@ -1,7 +1,7 @@
 import json
 from django.core.management.base import BaseCommand
 from core.application import Application
-from graph_explorer.commands import GraphCommandProcessor
+from core.use_cases.commands import GraphCommandProcessor
 from django.apps import apps
 
 
@@ -55,8 +55,11 @@ class Command(BaseCommand):
     - NOT: '{"name": "Test"}' (this will cause parsing errors)
     
     Examples:
-    - create-node --id 1 --data '{\"name\": \"John\", \"age\": 30}'
-    - create-edge --src 1 --tgt 2 --data '{\"weight\": 5, \"type\": \"friendship\"}'
+    - create-node --workspace <id> --id 1 --data '{\"name\": \"John\", \"age\": 30}'
+    - create-edge --workspace <id> --src 1 --tgt 2 --data '{\"weight\": 5, \"type\": \"friendship\"}'
+
+    NOTICE:
+    - locate in graph_explorer/graph_explorer and type "python manage.py graph_cli <ONE_OF_EXAMPLES_ABOVE>" 
     """
     help = 'Graph CLI commands for node and edge manipulation. Use escaped JSON format: \'{\\"name\\": \\"Test\\"}\''
 
@@ -144,7 +147,7 @@ class Command(BaseCommand):
         """
         command = options.get('command')
         if not command:
-            self.stdout.write('ERROR: No command specified. Use --help for available commands.')
+            self.stdout.write('ERROR: No command specified.')
             self.stdout.write('\nJSON Format Examples:')
             self.stdout.write('  create-node --id 1 --data \'{\\"name\\": \\"Test\\"}\'')
             self.stdout.write('  create-edge --src 1 --tgt 2 --data \'{\\"weight\\": 5}\'')
