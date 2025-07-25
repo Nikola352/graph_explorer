@@ -4,9 +4,11 @@ from typing import Any, Dict, List, Optional, cast
 from tinydb import TinyDB
 
 from core.models.workspace import Workspace
+from core.repositories.workspace_repository.interfaces.base_workspace_repository import \
+    BaseWorkspaceRepository
 
 
-class WorkspaceRepository(object):
+class WorkspaceRepository(BaseWorkspaceRepository):
     """
     Class responsible for storing and retrieving workspace data using TinyDB.
     """

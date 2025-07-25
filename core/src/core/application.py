@@ -4,8 +4,10 @@ from api.components.data_source import DataSourceConfigParam
 from core.config.application_config import ApplicationConfig, load_app_config
 from core.models.filterOperator import FilterOperator
 from core.models.workspace import Workspace
-from core.repositories.graph_repository import GraphRepository
-from core.repositories.workspace_repository import WorkspaceRepository
+from core.repositories.graph_repository.implementations.neo4j_graph_repository import \
+    Neo4JGraphRepository
+from core.repositories.workspace_repository.implementations.tiny_db_workspace_repository import \
+    WorkspaceRepository
 from core.use_cases.graph_context import GraphContext
 from core.use_cases.plugin_recognition import load_plugins
 from core.use_cases.workspaces import WorkspaceService
@@ -38,7 +40,7 @@ class Application(object):
         self.current_workspace_id: str = workspace.id
 
         # Initializer graph storage
-        self.graph_repository = GraphRepository(
+        self.graph_repository = Neo4JGraphRepository(
             uri=app_config.graph_db_uri,
             user=app_config.graph_db_user,
             password=app_config.graph_db_password

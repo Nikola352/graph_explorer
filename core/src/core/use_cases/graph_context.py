@@ -1,13 +1,16 @@
 from typing import List
+from unittest.mock import Base
+
+from neo4j._sync.work import workspace
 
 from api.components.data_source import DataSourcePlugin
 from api.components.visualizer import VisualizerPlugin
 from api.models.graph import Graph
 from core.models.filter import Filter
 from core.models.workspace import Workspace
-from core.repositories.graph_repository import GraphRepository
+from core.repositories.graph_repository.interfaces.base_graph_repository import \
+    BaseGraphRepository
 from core.use_cases.workspaces import WorkspaceService
-from neo4j._sync.work import workspace
 
 
 class GraphContext(object):
@@ -35,7 +38,7 @@ class GraphContext(object):
                  data_source_plugins: List[DataSourcePlugin],
                  visualizer_plugins: List[VisualizerPlugin],
                  workspace_service: WorkspaceService,
-                 graph_repository: GraphRepository,
+                 graph_repository: BaseGraphRepository,
                  ):
         """
         Initializes the GraphContext with workspace and plugins.
@@ -49,7 +52,7 @@ class GraphContext(object):
         :param workspace_service: Repository for persisting updates to the graph context
         :type workspace_service: WorkspaceService
         :param graph_repository: Repository for managing persistent graph storage
-        :type graph_repository: GraphRepository
+        :type graph_repository: BaseGraphRepository
         """
         self._workspace_service = workspace_service
         self._graph_repository = graph_repository
@@ -133,9 +136,9 @@ class GraphContext(object):
         """
         if self._selected_data_source is None:
             raise KeyError("No data source selected")
-        return self._graph_repository.query_graph(self._workspace_id, [], "");
+        return self._graph_repository.query_graph(self._workspace_id, [], "")
 
-    def save_graph(self, graph:Graph):
+    def save_graph(self, graph: Graph):
         """
         Saving graph to repository
 
