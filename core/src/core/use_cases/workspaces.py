@@ -11,7 +11,8 @@ The module handles all workspace-related operations including:
 from typing import List
 
 from core.models.workspace import Workspace
-from core.repositories.workspace_repository import WorkspaceRepository
+from core.repositories.workspace_repository.implementations.tiny_db_workspace_repository import \
+    BaseWorkspaceRepository
 
 
 class WorkspaceService(object):
@@ -19,7 +20,7 @@ class WorkspaceService(object):
     Provides functions for workspace management.
     """
 
-    def __init__(self, repo: WorkspaceRepository):
+    def __init__(self, repo: BaseWorkspaceRepository):
         """
         Initializes workspace store and creates a default workspace if no workspaces exist.
         """
@@ -32,7 +33,7 @@ class WorkspaceService(object):
     def create_workspace(self, name: str, data_source_id: str | None = None, data_source_config: dict = {}) -> Workspace:
         """
         Creates an empty workspace with the given name.
-        
+
         :param name: The name of the new workspace.
         :type name: str
         :param data_source_id: The identifier of the selected data source.
