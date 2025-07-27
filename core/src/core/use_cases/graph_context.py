@@ -82,6 +82,8 @@ class GraphContext(object):
         return {
             "selected_data_source": self._selected_data_source.identifier() if self._selected_data_source else None,
             "selected_visualizer": self._selected_visualizer.identifier() if self._selected_visualizer else None,
+            "filters": [f.to_dict() for f in self.filters],
+            "search_term": self.search_term,
             "graph_html": graph_html
         }
 

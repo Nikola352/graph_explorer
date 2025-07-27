@@ -6,6 +6,7 @@ from django.http import (HttpRequest, HttpResponse, HttpResponseNotAllowed,
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
+from api.models.graph import Graph
 from core.application import Application
 from core.commands.command_names import CommandNames
 from core.commands.command_processor import CommandProcessor
@@ -22,11 +23,11 @@ def index(request):
     context = core_app.get_context()
     current_workspace = next(
         (w for w in context["workspaces"] if w.id == context["current_workspace_id"]), None)
-    context["filters"] = current_workspace.filters if current_workspace else [""]
-    context["search_term"] = graph_context.search_term
     if current_workspace:
-        graph = graph_context._graph_repository.query_graph(
-            current_workspace.id, [])
+        try:
+            graph = graph_context.get_graph()
+        except KeyError:
+            graph = Graph()
         context["graph"] = graph
         context["current_workspace"] = current_workspace
         context["graph_nodes"] = [{"id": n.id, "data": n.data}
