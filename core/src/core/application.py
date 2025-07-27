@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from api.components.data_source import DataSourceConfigParam
+from core.commands.command_names import CommandNames
 from core.commands.command_processor import CommandProcessor
 from core.commands.filter_commands import FilterCommand, SearchCommand
 from core.commands.graph_commands import (ClearGraphCommand, CreateEdgeCommand,
@@ -128,13 +129,13 @@ class AppCommandProcessor(CommandProcessor):
         super().__init__()
         self.app = app
         self._command_registry.update({
-            'create-node': lambda args: CreateNodeCommand(app.graph_context, args),
-            'update-node': lambda args: UpdateNodeCommand(app.graph_context, args),
-            'delete-node': lambda args: DeleteNodeCommand(app.graph_context, args),
-            'create-edge': lambda args: CreateEdgeCommand(app.graph_context, args),
-            'update-edge': lambda args: UpdateEdgeCommand(app.graph_context, args),
-            'delete-edge': lambda args: DeleteEdgeCommand(app.graph_context, args),
-            'clear-graph': lambda _: ClearGraphCommand(app.graph_context),
-            'search': lambda args: SearchCommand(app.graph_context, args),
-            'filter': lambda args: FilterCommand(app.graph_context, args),
+            CommandNames.CREATE_NODE: lambda args: CreateNodeCommand(app.graph_context, args),
+            CommandNames.UPDATE_NODE: lambda args: UpdateNodeCommand(app.graph_context, args),
+            CommandNames.DELETE_NODE: lambda args: DeleteNodeCommand(app.graph_context, args),
+            CommandNames.CREATE_EDGE: lambda args: CreateEdgeCommand(app.graph_context, args),
+            CommandNames.UPDATE_EDGE: lambda args: UpdateEdgeCommand(app.graph_context, args),
+            CommandNames.DELETE_EDGE: lambda args: DeleteEdgeCommand(app.graph_context, args),
+            CommandNames.CLEAR_GRAPH: lambda _: ClearGraphCommand(app.graph_context),
+            CommandNames.SEARCH: lambda args: SearchCommand(app.graph_context, args),
+            CommandNames.FILTER: lambda args: FilterCommand(app.graph_context, args),
         })
