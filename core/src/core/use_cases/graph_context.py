@@ -147,17 +147,20 @@ class GraphContext(object):
         graph = self._selected_data_source.load(**self._data_source_config)
         self._graph_repository.save_graph(self._workspace_id, graph)
 
-    def select_visualizer(self, visualizer_id: str):
+    def select_visualizer(self, visualizer_id: str) -> VisualizerPlugin:
         """
         Changes the active visualizer.
 
         :param visualizer_id: ID of the visualizer to select
         :type visualizer_id: str
+        :return: the newly selected visualizer
+        :rtype: VisualizerPlugin
         :raises KeyError: If the visualizer ID is not found
         """
         self._selected_visualizer = self.visualizer_plugins[visualizer_id]
         self._workspace_service.set_visualizer(
             self._workspace_id, visualizer_id)
+        return self.visualizer_plugins[visualizer_id]
 
     def add_filter(self, filter: Filter):
         self.filters.append(filter)

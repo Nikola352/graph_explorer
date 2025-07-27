@@ -16,3 +16,12 @@ class CommandNames(str, Enum):
     FILTER = "filter"
     CLEAR_SEARCH = "clear-search"
     REMOVE_FILTER = "remove-filter"
+
+    # Workspaces
+    SELECT_WORKSPACE = "select-workspace"
+    CREATE_WORKSPACE = "create-workspace"
+    UPDATE_WORKSPACE = "update-workspace"
+    DELETE_WORKSPACE = "delete-workspace"
+
+    SELECT_VISUALIZER = "select-visualizer"
+    REFRESH_DATA_SOURCE = "refresh-data-source"
