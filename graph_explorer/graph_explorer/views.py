@@ -9,9 +9,7 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from core.application import Application
 from core.commands.command_names import CommandNames
 from core.commands.command_processor import CommandProcessor
-from core.models.filter import Filter, FilterOperator
 from core.use_cases.graph_context import GraphContext
-from core.use_cases.workspaces import WorkspaceService
 
 
 def index(request):
