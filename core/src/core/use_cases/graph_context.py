@@ -1,7 +1,4 @@
-from typing import List
-from unittest.mock import Base
-
-from neo4j._sync.work import workspace
+from typing import List, Optional
 
 from api.components.data_source import DataSourcePlugin
 from api.components.visualizer import VisualizerPlugin
@@ -35,8 +32,8 @@ class GraphContext(object):
 
     def __init__(self,
                  workspace: Workspace,
-                 data_source_plugins: List[DataSourcePlugin],
-                 visualizer_plugins: List[VisualizerPlugin],
+                 data_source: Optional[DataSourcePlugin],
+                 visualizer: Optional[VisualizerPlugin],
                  workspace_service: WorkspaceService,
                  graph_repository: BaseGraphRepository,
                  ):
@@ -57,25 +54,11 @@ class GraphContext(object):
         self._workspace_service = workspace_service
         self._graph_repository = graph_repository
 
-        # save as dict for fast lookup
-        self.data_source_plugins = {
-            p.identifier(): p for p in data_source_plugins}
-        self.visualizer_plugins = {
-            p.identifier(): p for p in visualizer_plugins}
-
         self._workspace_id = workspace.id
         self._data_source_config = workspace.data_source_config
 
-        if workspace.data_source_id and workspace.data_source_id in self.data_source_plugins:
-            self._selected_data_source = self.data_source_plugins[workspace.data_source_id]
-        else:
-            self._selected_data_source = None
-
-        if workspace.visualizer_id and workspace.visualizer_id in self.visualizer_plugins:
-            self._selected_visualizer = self.visualizer_plugins[workspace.visualizer_id]
-        elif visualizer_plugins:
-            # use the first visualizer as default if none is selected
-            self._selected_visualizer = visualizer_plugins[0]
+        self._selected_data_source = data_source
+        self._selected_visualizer = visualizer
 
         self.filters: List[Filter] = workspace.filters
         self.search_term: str = ""
@@ -123,17 +106,17 @@ class GraphContext(object):
         """
         self._graph_repository.save_graph(self._workspace_id, graph)
 
-    def select_data_source(self, data_source_id: str):
+    def select_data_source(self, data_source: DataSourcePlugin):
         """
         Changes the active data source.
 
-        :param data_source_id: ID of the data source to select
-        :type data_source_id: str
+        :param data_source: The new data source
+        :type data_source: DataSourcePlugin
         :raises KeyError: If the data source ID is not found
         """
-        self._selected_data_source = self.data_source_plugins[data_source_id]
+        self._selected_data_source = data_source
         self._workspace_service.set_data_source(
-            self._workspace_id, data_source_id)
+            self._workspace_id, data_source.identifier())
         self.refresh_data_source()
 
     def refresh_data_source(self):
@@ -147,20 +130,17 @@ class GraphContext(object):
         graph = self._selected_data_source.load(**self._data_source_config)
         self._graph_repository.save_graph(self._workspace_id, graph)
 
-    def select_visualizer(self, visualizer_id: str) -> VisualizerPlugin:
+    def select_visualizer(self, visualizer: VisualizerPlugin):
         """
         Changes the active visualizer.
 
-        :param visualizer_id: ID of the visualizer to select
-        :type visualizer_id: str
-        :return: the newly selected visualizer
-        :rtype: VisualizerPlugin
+        :param visualizer: The new visualizer
+        :type visualizer: VisualizerPlugin
         :raises KeyError: If the visualizer ID is not found
         """
-        self._selected_visualizer = self.visualizer_plugins[visualizer_id]
+        self._selected_visualizer = visualizer
         self._workspace_service.set_visualizer(
-            self._workspace_id, visualizer_id)
-        return self.visualizer_plugins[visualizer_id]
+            self._workspace_id, visualizer.identifier())
 
     def add_filter(self, filter: Filter):
         self.filters.append(filter)

@@ -1,5 +1,7 @@
 from typing import Any, Callable, Dict, Tuple
 
+from api.components.data_source import DataSourcePlugin
+from api.components.visualizer import VisualizerPlugin
 from core.commands.command import Command
 from core.models.workspace import Workspace
 from core.use_cases.graph_context import GraphContext
@@ -40,10 +42,17 @@ class CreateWorkspaceCommand(Command):
 
 
 class UpdateWorkspaceCommand(Command):
-    def __init__(self, workspace_service: WorkspaceService, graph_context: GraphContext, get_current_workspace_id: Callable[[], str], args: Dict[str, Any]):
+    def __init__(self,
+                 workspace_service: WorkspaceService,
+                 graph_context: GraphContext,
+                 get_current_workspace_id: Callable[[], str],
+                 find_data_source_by_id: Callable[[str], DataSourcePlugin],
+                 args: Dict[str, Any],
+                 ):
         self.workspace_service = workspace_service
         self.graph_context = graph_context
         self.get_current_workspace_id = get_current_workspace_id
+        self.find_data_source_by_id = find_data_source_by_id
         self.workspace_id = args.get("workspace_id")
         self.name = args.get("name")
         self.data_source_id = args.get("data_source_id")
@@ -64,7 +73,8 @@ class UpdateWorkspaceCommand(Command):
             # Update current workspace context if it's the active one
             if self.get_current_workspace_id() == workspace.id:
                 self.graph_context.set_data_source_config(self.config)
-                self.graph_context.select_data_source(self.data_source_id)
+                data_source = self.find_data_source_by_id(self.data_source_id)
+                self.graph_context.select_data_source(data_source)
 
             return True, f"Updated {workspace.name}"
         except KeyError:
@@ -92,14 +102,23 @@ class DeleteWorkspaceCommand(Command):
 
 
 class SelectVisualizerCommand(Command):
-    def __init__(self, graph_context: GraphContext, args: Dict[str, Any]) -> None:
+    def __init__(self,
+                 graph_context: GraphContext,
+                 find_visualizer_by_id: Callable[[str], VisualizerPlugin],
+                 args: Dict[str, Any]
+                 ) -> None:
         self.graph_context = graph_context
+        self.find_visualizer_by_id = find_visualizer_by_id
         self.visualizer_id = args.get('visualizer_id')
 
     def execute(self) -> Tuple[bool, str]:
         if not self.visualizer_id:
             return False, "No visualizer id provided"
-        visualizer = self.graph_context.select_visualizer(self.visualizer_id)
+        try:
+            visualizer = self.find_visualizer_by_id(self.visualizer_id)
+        except KeyError:
+            return False, f"Unknown visualizer: {self.visualizer_id}"
+        self.graph_context.select_visualizer(visualizer)
         return True, f"Selected {visualizer.name()} as visualizer"
 
 

@@ -38,6 +38,12 @@ class Application(object):
         # Load available plugins
         self.data_source_plugins, self.visualizer_plugins = load_plugins()
 
+        # save as dict for fast lookup
+        self.data_source_map = {
+            p.identifier(): p for p in self.data_source_plugins}
+        self.visualizer_map = {
+            p.identifier(): p for p in self.visualizer_plugins}
+
         # Initializer workspace storage
         workspace_repo = WorkspaceRepository(app_config.workspace_db_path)
         self.workspace_service = WorkspaceService(workspace_repo)
@@ -52,10 +58,18 @@ class Application(object):
         )
 
         # Create the initial graph context
+        current_data_source = self.data_source_map.get(
+            workspace.data_source_id) if workspace.data_source_id else None
+        current_visualizer = self.visualizer_map.get(
+            workspace.visualizer_id) if workspace.visualizer_id else None
+        if current_visualizer is None and self.visualizer_plugins:
+            # use the first visualizer as default if none is selected
+            current_visualizer = self.visualizer_plugins[0]
+
         self.graph_context = GraphContext(
             workspace,
-            self.data_source_plugins,
-            self.visualizer_plugins,
+            current_data_source,
+            current_visualizer,
             self.workspace_service,
             self.graph_repository,
         )
@@ -95,13 +109,23 @@ class Application(object):
         if workspace is None:
             raise KeyError("The workspace does not exist")
         self.current_workspace_id = workspace_id
+
+        current_data_source = self.data_source_map.get(
+            workspace.data_source_id) if workspace.data_source_id else None
+        current_visualizer = self.visualizer_map.get(
+            workspace.visualizer_id) if workspace.visualizer_id else None
+        if current_visualizer is None and self.visualizer_plugins:
+            # use the first visualizer as default if none is selected
+            current_visualizer = self.visualizer_plugins[0]
+
         self.graph_context = GraphContext(
             workspace,
-            self.data_source_plugins,
-            self.visualizer_plugins,
+            current_data_source,
+            current_visualizer,
             self.workspace_service,
             self.graph_repository,
         )
+
         return workspace
 
     def get_data_source_config_params(self, data_source_id: str) -> List[DataSourceConfigParam]:
@@ -139,9 +163,23 @@ class AppCommandProcessor(CommandProcessor):
             CommandNames.CLEAR_SEARCH: lambda _: ClearSearchCommand(app.graph_context),
             CommandNames.REMOVE_FILTER: lambda args: RemoveFilterCommand(app.graph_context, args),
             CommandNames.SELECT_WORKSPACE: lambda args: SelectWorkspaceCommand(lambda id: app.select_workspace(id), args),
-            CommandNames.CREATE_WORKSPACE: lambda args: CreateWorkspaceCommand(app.workspace_service, lambda id: app.select_workspace(id), args),
-            CommandNames.UPDATE_WORKSPACE: lambda args: UpdateWorkspaceCommand(app.workspace_service, app.graph_context, lambda: app.current_workspace_id, args),
+            CommandNames.CREATE_WORKSPACE: lambda args: CreateWorkspaceCommand(
+                app.workspace_service,
+                lambda id: app.select_workspace(id),
+                args
+            ),
+            CommandNames.UPDATE_WORKSPACE: lambda args: UpdateWorkspaceCommand(
+                workspace_service=app.workspace_service,
+                graph_context=app.graph_context,
+                get_current_workspace_id=lambda: app.current_workspace_id,
+                find_data_source_by_id=lambda id: app.data_source_map[id],
+                args=args,
+            ),
             CommandNames.DELETE_WORKSPACE: lambda args: DeleteWorkspaceCommand(app.workspace_service, args),
-            CommandNames.SELECT_VISUALIZER: lambda args: SelectVisualizerCommand(app.graph_context, args),
+            CommandNames.SELECT_VISUALIZER: lambda args: SelectVisualizerCommand(
+                graph_context=app.graph_context,
+                find_visualizer_by_id=lambda id: app.visualizer_map[id],
+                args=args,
+            ),
             CommandNames.REFRESH_DATA_SOURCE: lambda args: RefreshDataSourceCommand(app.graph_context),
         })
