@@ -42,41 +42,9 @@ cliHelpBtn.onclick = () => {
   cliResult.className = "cli-modal-result";
 };
 
-function updateGraphInfo(nodes, edges) {
-  const nodesList = document.querySelector(".cli-modal-graphinfo-list");
-  if (nodesList)
-    nodesList.innerHTML =
-      nodes
-        .map(
-          (n) =>
-            `<li>ID: <b>${
-              n.id
-            }</b>, data: <span style='color:#1a699e'>${JSON.stringify(
-              n.data
-            )}</span></li>`
-        )
-        .join("") || "<li><i>No nodes</i></li>";
-  const edgesList = document.querySelectorAll(".cli-modal-graphinfo-list")[1];
-  if (edgesList)
-    edgesList.innerHTML =
-      edges
-        .map(
-          (e) =>
-            `<li>${e.src} &rarr; ${
-              e.target
-            }, data: <span style='color:#1a699e'>${JSON.stringify(
-              e.data
-            )}</span></li>`
-        )
-        .join("") || "<li><i>No edges</i></li>";
-}
-
-function showCliSuccess(result, nodes, edges, is_update) {
+function showCliSuccess(result) {
   cliResult.innerHTML = '<span class="icon">✅</span> ' + result;
   cliResult.className = "cli-modal-result success";
-  if (nodes && edges && is_update) {
-    updateGraphInfo(nodes, edges);
-  }
   setTimeout(() => {
     cliModal.style.display = "none";
     window.location.reload();
@@ -176,7 +144,7 @@ cliExecuteBtn.onclick = async () => {
     const data = await resp.json();
 
     if (data.success) {
-      showCliSuccess(data.message, data.graph_nodes, data.graph_edges, !commandString.includes("search") && !commandString.includes("filter"));
+      showCliSuccess(data.message);
     } else {
       showCliError(data);
     }

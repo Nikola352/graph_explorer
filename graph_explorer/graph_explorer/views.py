@@ -280,8 +280,6 @@ def cli_command_view(request: HttpRequest) -> HttpResponse:
                 return JsonResponse({
                     'success': False,
                     'message': 'No command specified',
-                    'graph_nodes': [],
-                    'graph_edges': []
                 })
 
             try:
@@ -293,28 +291,20 @@ def cli_command_view(request: HttpRequest) -> HttpResponse:
             return JsonResponse({
                 'success': success,
                 'message': message,
-                'graph_nodes': [],
-                'graph_edges': []
             })
 
         except json.JSONDecodeError:
             return JsonResponse({
                 'success': False,
                 'message': 'Invalid JSON data',
-                'graph_nodes': [],
-                'graph_edges': []
             })
         except Exception as e:
             return JsonResponse({
                 'success': False,
                 'message': f'Error processing command: {str(e)}',
-                'graph_nodes': [],
-                'graph_edges': []
             })
 
     return JsonResponse({
         'success': False,
         'message': 'Only POST method allowed',
-        'graph_nodes': [],
-        'graph_edges': []
     })
