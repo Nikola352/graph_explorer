@@ -1,8 +1,10 @@
 import json
-from django.core.management.base import BaseCommand
-from core.application import Application
-from core.use_cases.commands import GraphCommandProcessor
+
 from django.apps import apps
+from django.core.management.base import BaseCommand
+
+from core.application import Application
+from core.commands.command_processor import CommandProcessor
 
 
 def process_graph_command(subcommand, args_dict):
@@ -17,9 +19,12 @@ def process_graph_command(subcommand, args_dict):
     :return: Tuple of success and message
     :rtype: Tuple(bool, string)
     """
-    core_app: Application = apps.get_app_config('graph_explorer').core_app  # type: ignore
-    graph_ctx = core_app.graph_context
+    core_app: Application = apps.get_app_config(
+        'graph_explorer').core_app  # type: ignore
     
+    processor: CommandProcessor = apps.get_app_config(
+        'graph_explorer').command_processor  # type: ignore
+
     workspace_id = args_dict.get('workspace')
     if workspace_id:
         try:
@@ -30,17 +35,8 @@ def process_graph_command(subcommand, args_dict):
     graph_context = core_app.graph_context
     if not graph_context:
         return False, 'No graph context available. Please select a workspace first.'
-    
-    graph = graph_context.get_graph()
-    
-    processor = GraphCommandProcessor()
-    success, message = processor.execute_command(subcommand, graph, args_dict)
-    
-    if success:
-        try:
-            graph_context.save_graph(graph)
-        except Exception as e:
-            return False, f'Command succeeded but failed to save graph: {str(e)}'
+
+    success, message = processor.execute_command(subcommand, args_dict)
     
     return success, message
 

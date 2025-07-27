@@ -7,10 +7,10 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
 from core.application import Application
+from core.commands.command_processor import CommandProcessor
 from core.models.filter import Filter, FilterOperator
 from core.use_cases.graph_context import GraphContext
 from core.use_cases.workspaces import WorkspaceService
-from core.use_cases.commands import GraphCommandProcessor
 
 
 def index(request):
@@ -267,8 +267,9 @@ def cli_command_view(request: HttpRequest) -> HttpResponse:
     Handle CLI commands from web interface.
     """
 
-    graph_context: GraphContext = apps.get_app_config(
-        'graph_explorer').graph_context  # type: ignore
+    processor: CommandProcessor = apps.get_app_config(
+        'graph_explorer').command_processor  # type: ignore
+
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -283,40 +284,17 @@ def cli_command_view(request: HttpRequest) -> HttpResponse:
                     'graph_edges': []
                 })
 
-            core_app: Application = apps.get_app_config(
-                'graph_explorer').core_app  # type: ignore
-            graph_ctx = core_app.graph_context
-            graph = graph_context.get_graph()
-            
-            if not graph_context:
-                return JsonResponse({
-                    'success': False,
-                    'message': 'No graph context available',
-                    'graph_nodes': [],
-                    'graph_edges': []
-                })
-
-            processor = GraphCommandProcessor()
-            success, message = processor.execute_command(command, graph, args)
-
-            if success:
-                try:
-                    graph_context.save_graph(graph)
-                except Exception as e:
-                    success = False
-                    message = f'Command succeeded but failed to save graph: {str(e)}'
-
-            graph = graph_context.get_graph()
-            graph_nodes = [{'id': node.id, 'data': node.data}
-                           for node in graph.get_nodes()]
-            graph_edges = [{'src': edge.src.id, 'target': edge.target.id,
-                            'data': edge.data} for edge in graph.get_edges()]
+            try:
+                success, message = processor.execute_command(command, args)
+            except Exception as e:
+                success = False
+                message = f"Command execution failed: {str(e)}"
 
             return JsonResponse({
                 'success': success,
                 'message': message,
-                'graph_nodes': graph_nodes,
-                'graph_edges': graph_edges
+                'graph_nodes': [],
+                'graph_edges': []
             })
 
         except json.JSONDecodeError:
