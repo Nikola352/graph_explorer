@@ -7,6 +7,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
 from core.application import Application
+from core.commands.command_names import CommandNames
 from core.commands.command_processor import CommandProcessor
 from core.models.filter import Filter, FilterOperator
 from core.use_cases.graph_context import GraphContext
@@ -43,8 +44,8 @@ def index(request):
 
 @csrf_protect
 def filter_view(request: HttpRequest):
-    graph_context: GraphContext = apps.get_app_config(
-        'graph_explorer').graph_context  # type: ignore
+    processor: CommandProcessor = apps.get_app_config(
+        'graph_explorer').command_processor  # type: ignore
 
     if request.method == "POST":
         try:
@@ -55,17 +56,19 @@ def filter_view(request: HttpRequest):
             value = data.get("value")
             if operator == "" or value == "" or attribute == "":
                 raise ValueError("Fields are required!")
-            new_filter = Filter(
-                attribute, operator=FilterOperator(operator), value=value)
-            # if the same filter is already there return error
-            if new_filter in graph_context.filters:
-                raise ValueError("Filter already exists!")
-            graph_context.add_filter(new_filter)
+
+            success, message = processor.execute_command(CommandNames.FILTER, {
+                "field": attribute,
+                "operator": operator,
+                "value": value,
+            })
+
+            if not success:
+                return JsonResponse({"error": message}, status=422)
+
             return redirect('index')
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
-        except ValueError as e:
-            return JsonResponse({"error": str(e)}, status=422)
 
     return JsonResponse({"error": "Only POST allowed"}, status=405)
 
@@ -179,15 +182,22 @@ def delete_workspace(request: HttpRequest, workspace_id: str) -> HttpResponse:
 
 @csrf_protect
 def search_view(request: HttpRequest):
-    graph_context: GraphContext = apps.get_app_config(
-        'graph_explorer').graph_context  # type: ignore
+    processor: CommandProcessor = apps.get_app_config(
+        'graph_explorer').command_processor  # type: ignore
     if request.method == "POST":
         try:
             data = json.loads(request.body)
             attribute = data.get("query")
             if attribute == None:
                 raise ValueError("Query are required!")
-            graph_context.search_term = attribute
+
+            success, message = processor.execute_command(CommandNames.SEARCH, {
+                "query": attribute,
+            })
+
+            if not success:
+                return JsonResponse({"error": message}, status=400)
+
             return redirect('index')
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
@@ -195,8 +205,8 @@ def search_view(request: HttpRequest):
 
 
 def remove_filter(request: HttpRequest):
-    graph_context: GraphContext = apps.get_app_config(
-        'graph_explorer').graph_context  # type: ignore
+    processor: CommandProcessor = apps.get_app_config(
+        'graph_explorer').command_processor  # type: ignore
     if request.method == "POST":
         try:
             data = json.loads(request.body)
@@ -205,29 +215,42 @@ def remove_filter(request: HttpRequest):
             value = data.get("value")
             if not field or not operator or not value:
                 raise ValueError("Fields are required!")
-            choises = FilterOperator.choices()
 
-            filter = Filter(field, FilterOperator(choises[operator]), value)
-            graph_context.remove_filter(filter)
+            success, message = processor.execute_command(CommandNames.REMOVE_FILTER, {
+                "field": field,
+                "operator": operator,
+                "value": value,
+            })
+            if not success:
+                return JsonResponse({"error": message}, status=400)
+
             return redirect('index')
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
+        except ValueError as e:
+            return JsonResponse({"error": str(e)}, status=422)
     return JsonResponse({"error": "Only POST allowed"}, status=405)
 
 
 def remove_search(request: HttpRequest):
-    graph_context: GraphContext = apps.get_app_config(
-        'graph_explorer').graph_context  # type: ignore
+    processor: CommandProcessor = apps.get_app_config(
+        'graph_explorer').command_processor  # type: ignore
     if request.method == "POST":
         try:
             data = json.loads(request.body)
             search_term = data.get("search_term")
             if not search_term:
                 raise ValueError("Fields are required!")
-            graph_context.search_term = ""
+            success, message = processor.execute_command(
+                CommandNames.CLEAR_SEARCH, {})
+            if not success:
+                return JsonResponse({"error": message}, status=400)
             return redirect('index')
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
+        except ValueError as e:
+            return JsonResponse({"error": str(e)}, status=422)
+
     return JsonResponse({"error": "Only POST allowed"}, status=405)
 
 

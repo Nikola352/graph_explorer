@@ -33,7 +33,41 @@ class FilterCommand(Command):
         if not field or not operator or not value:
             return False, 'All filter parameters are required.'
 
-        filter = Filter(field=field, operator=FilterOperator(
+        new_filter = Filter(field=field, operator=FilterOperator(
             operator), value=value)
-        self.graph_context.add_filter(filter)
-        return True, f'Filter added: {filter}'
+
+        if new_filter in self.graph_context.filters:
+            return False, "Filter already exists!"
+
+        self.graph_context.add_filter(new_filter)
+        return True, f'Filter added: {new_filter}'
+
+
+class ClearSearchCommand(Command):
+    def __init__(self, graph_context: GraphContext) -> None:
+        self.graph_context = graph_context
+
+    def execute(self) -> Tuple[bool, str]:
+        self.graph_context.search_term = ""
+        return True, "Cleared search query"
+
+
+class RemoveFilterCommand(Command):
+    def __init__(self, graph_context: GraphContext, args: Dict[str, Any]) -> None:
+        self.graph_context = graph_context
+        self.args = args
+
+    def execute(self) -> Tuple[bool, str]:
+        field = self.args.get('field')
+        operator = self.args.get('operator')
+        value = self.args.get('value')
+
+        if not field or not operator or not value:
+            return False, "Fields are required!"
+
+        choises = FilterOperator.choices()
+
+        filter = Filter(field, FilterOperator(choises[operator]), value)
+        self.graph_context.remove_filter(filter)
+
+        return True, "Filter removed"

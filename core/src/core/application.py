@@ -3,7 +3,8 @@ from typing import Any, Dict, List, Optional
 from api.components.data_source import DataSourceConfigParam
 from core.commands.command_names import CommandNames
 from core.commands.command_processor import CommandProcessor
-from core.commands.filter_commands import FilterCommand, SearchCommand
+from core.commands.filter_commands import (ClearSearchCommand, FilterCommand,
+                                           RemoveFilterCommand, SearchCommand)
 from core.commands.graph_commands import (ClearGraphCommand, CreateEdgeCommand,
                                           CreateNodeCommand, DeleteEdgeCommand,
                                           DeleteNodeCommand, UpdateEdgeCommand,
@@ -138,4 +139,6 @@ class AppCommandProcessor(CommandProcessor):
             CommandNames.CLEAR_GRAPH: lambda _: ClearGraphCommand(app.graph_context),
             CommandNames.SEARCH: lambda args: SearchCommand(app.graph_context, args),
             CommandNames.FILTER: lambda args: FilterCommand(app.graph_context, args),
+            CommandNames.CLEAR_SEARCH: lambda _: ClearSearchCommand(app.graph_context),
+            CommandNames.REMOVE_FILTER: lambda args: RemoveFilterCommand(app.graph_context, args),
         })

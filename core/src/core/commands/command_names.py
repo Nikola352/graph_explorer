@@ -14,3 +14,5 @@ class CommandNames(str, Enum):
     # Node filtering
     SEARCH = "search"
     FILTER = "filter"
+    CLEAR_SEARCH = "clear-search"
+    REMOVE_FILTER = "remove-filter"
