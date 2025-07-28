@@ -102,6 +102,27 @@ class GraphContext(object):
             "graph_html": graph_html
         }
 
+    def get_graph(self) -> Graph:
+        """
+        Returns the saved graph with no filters applied.
+
+        :raises KeyError: If no data source is selected
+        :return graph
+        :rtype Graph
+        """
+        if self._selected_data_source is None:
+            raise KeyError("No data source selected")
+        return self._graph_repository.query_graph(self._workspace_id, [])
+
+    def save_graph(self, graph: Graph):
+        """
+        Saves the given graph for the active workspace
+
+        :param graph: updated graph to save
+        :type graph: Graph
+        """
+        self._graph_repository.save_graph(self._workspace_id, graph)
+
     def select_data_source(self, data_source_id: str):
         """
         Changes the active data source.
@@ -126,38 +147,20 @@ class GraphContext(object):
         graph = self._selected_data_source.load(**self._data_source_config)
         self._graph_repository.save_graph(self._workspace_id, graph)
 
-    def get_graph(self) -> Graph:
-        """
-        Getting graph from repository
-
-        :raises KeyError: If no data source is selected
-        :return graph
-        :rtype Graph
-        """
-        if self._selected_data_source is None:
-            raise KeyError("No data source selected")
-        return self._graph_repository.query_graph(self._workspace_id, [], "")
-
-    def save_graph(self, graph: Graph):
-        """
-        Saving graph to repository
-
-        :param graph: updated graph to save
-        :type graph: Graph
-        """
-        self._graph_repository.save_graph(self._workspace_id, graph)
-
-    def select_visualizer(self, visualizer_id: str):
+    def select_visualizer(self, visualizer_id: str) -> VisualizerPlugin:
         """
         Changes the active visualizer.
 
         :param visualizer_id: ID of the visualizer to select
         :type visualizer_id: str
+        :return: the newly selected visualizer
+        :rtype: VisualizerPlugin
         :raises KeyError: If the visualizer ID is not found
         """
         self._selected_visualizer = self.visualizer_plugins[visualizer_id]
         self._workspace_service.set_visualizer(
             self._workspace_id, visualizer_id)
+        return self.visualizer_plugins[visualizer_id]
 
     def add_filter(self, filter: Filter):
         self.filters.append(filter)

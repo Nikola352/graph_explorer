@@ -1,6 +1,11 @@
 from typing import Any, Dict, List, Optional
 
 from api.components.data_source import DataSourceConfigParam
+from core.commands.command_names import CommandNames
+from core.commands.command_processor import CommandProcessor
+from core.commands.filter_commands import *
+from core.commands.graph_commands import *
+from core.commands.workspace_commands import *
 from core.config.application_config import ApplicationConfig, load_app_config
 from core.models.filterOperator import FilterOperator
 from core.models.workspace import Workspace
@@ -54,6 +59,8 @@ class Application(object):
             self.workspace_service,
             self.graph_repository,
         )
+
+        self.command_processor = AppCommandProcessor(self)
 
     def get_context(self) -> Dict[str, Any]:
         """
@@ -111,3 +118,30 @@ class Application(object):
         if not data_source:
             return []
         return data_source.get_configuration_parameters()
+
+
+class AppCommandProcessor(CommandProcessor):
+    """Processor that manages and executes Graph Explorer commands."""
+
+    def __init__(self, app: "Application"):
+        super().__init__()
+        self.app = app
+        self._command_registry.update({
+            CommandNames.CREATE_NODE: lambda args: CreateNodeCommand(app.graph_context, args),
+            CommandNames.UPDATE_NODE: lambda args: UpdateNodeCommand(app.graph_context, args),
+            CommandNames.DELETE_NODE: lambda args: DeleteNodeCommand(app.graph_context, args),
+            CommandNames.CREATE_EDGE: lambda args: CreateEdgeCommand(app.graph_context, args),
+            CommandNames.UPDATE_EDGE: lambda args: UpdateEdgeCommand(app.graph_context, args),
+            CommandNames.DELETE_EDGE: lambda args: DeleteEdgeCommand(app.graph_context, args),
+            CommandNames.CLEAR_GRAPH: lambda _: ClearGraphCommand(app.graph_context),
+            CommandNames.SEARCH: lambda args: SearchCommand(app.graph_context, args),
+            CommandNames.FILTER: lambda args: FilterCommand(app.graph_context, args),
+            CommandNames.CLEAR_SEARCH: lambda _: ClearSearchCommand(app.graph_context),
+            CommandNames.REMOVE_FILTER: lambda args: RemoveFilterCommand(app.graph_context, args),
+            CommandNames.SELECT_WORKSPACE: lambda args: SelectWorkspaceCommand(lambda id: app.select_workspace(id), args),
+            CommandNames.CREATE_WORKSPACE: lambda args: CreateWorkspaceCommand(app.workspace_service, lambda id: app.select_workspace(id), args),
+            CommandNames.UPDATE_WORKSPACE: lambda args: UpdateWorkspaceCommand(app.workspace_service, app.graph_context, lambda: app.current_workspace_id, args),
+            CommandNames.DELETE_WORKSPACE: lambda args: DeleteWorkspaceCommand(app.workspace_service, args),
+            CommandNames.SELECT_VISUALIZER: lambda args: SelectVisualizerCommand(app.graph_context, args),
+            CommandNames.REFRESH_DATA_SOURCE: lambda args: RefreshDataSourceCommand(app.graph_context),
+        })
