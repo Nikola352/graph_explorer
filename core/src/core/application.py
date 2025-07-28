@@ -13,9 +13,9 @@ from core.repositories.graph_repository.implementations.neo4j_graph_repository i
     Neo4JGraphRepository
 from core.repositories.workspace_repository.implementations.tiny_db_workspace_repository import \
     WorkspaceRepository
-from core.use_cases.graph_context import GraphContext
 from core.use_cases.plugin_recognition import load_plugins
 from core.use_cases.workspaces import WorkspaceService
+from core.use_cases.graph_context_factory import GraphContextFactory
 
 
 class Application(object):
@@ -38,11 +38,6 @@ class Application(object):
         # Load available plugins
         self.data_source_plugins, self.visualizer_plugins = load_plugins()
 
-        # save as dict for fast lookup
-        self.data_source_map = {
-            p.identifier(): p for p in self.data_source_plugins}
-        self.visualizer_map = {
-            p.identifier(): p for p in self.visualizer_plugins}
 
         # Initializer workspace storage
         workspace_repo = WorkspaceRepository(app_config.workspace_db_path)
@@ -57,23 +52,14 @@ class Application(object):
             password=app_config.graph_db_password
         )
 
-        # Create the initial graph context
-        current_data_source = self.data_source_map.get(
-            workspace.data_source_id) if workspace.data_source_id else None
-        current_visualizer = self.visualizer_map.get(
-            workspace.visualizer_id) if workspace.visualizer_id else None
-        if current_visualizer is None and self.visualizer_plugins:
-            # use the first visualizer as default if none is selected
-            current_visualizer = self.visualizer_plugins[0]
-
-        self.graph_context = GraphContext(
-            workspace,
-            current_data_source,
-            current_visualizer,
+        self.graph_context_factory = GraphContextFactory(
             self.workspace_service,
             self.graph_repository,
+            self.data_source_plugins,
+            self.visualizer_plugins
         )
 
+        self.graph_context = self.graph_context_factory.make(workspace)
         self.command_processor = AppCommandProcessor(self)
 
     def get_context(self) -> Dict[str, Any]:
@@ -110,21 +96,7 @@ class Application(object):
             raise KeyError("The workspace does not exist")
         self.current_workspace_id = workspace_id
 
-        current_data_source = self.data_source_map.get(
-            workspace.data_source_id) if workspace.data_source_id else None
-        current_visualizer = self.visualizer_map.get(
-            workspace.visualizer_id) if workspace.visualizer_id else None
-        if current_visualizer is None and self.visualizer_plugins:
-            # use the first visualizer as default if none is selected
-            current_visualizer = self.visualizer_plugins[0]
-
-        self.graph_context = GraphContext(
-            workspace,
-            current_data_source,
-            current_visualizer,
-            self.workspace_service,
-            self.graph_repository,
-        )
+        self.graph_context = self.graph_context_factory.make(workspace)
 
         if refresh:
             self.graph_context.refresh_data_source()

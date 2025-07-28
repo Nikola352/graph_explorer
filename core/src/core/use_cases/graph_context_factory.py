@@ -9,14 +9,14 @@ from core.use_cases.workspaces import WorkspaceService
 
 
 class GraphContextFactory():
-    def __init__(self, data_source_map: dict[str, DataSourcePlugin],
-                 visualizer_map: dict[str, VisualizerPlugin],
+    def __init__(self, 
                  workspace_service: WorkspaceService,
                  graph_repository: Neo4JGraphRepository,
+                 data_source_plugins: List[DataSourcePlugin],
                  visualizer_plugins: List[VisualizerPlugin]
                  ):
-        self.data_source_map = data_source_map
-        self.visualizer_map = visualizer_map
+        self.data_source_map = {p.identifier(): p for p in data_source_plugins}
+        self.visualizer_map = {p.identifier(): p for p in visualizer_plugins}
         self.workspace_service = workspace_service
         self.graph_repository = graph_repository
         self.visualizer_plugins = visualizer_plugins
@@ -30,11 +30,6 @@ class GraphContextFactory():
         if current_visualizer is None and self.visualizer_plugins:
             # use the first visualizer as default if none is selected
             current_visualizer = self.visualizer_plugins[0]
-        print("FACTORY ", workspace,
-              current_data_source,
-              current_visualizer,
-              self.workspace_service,
-              self.graph_repository)
         return GraphContext(
             workspace,
             current_data_source,
