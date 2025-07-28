@@ -33,6 +33,16 @@ class BaseGraphRepository(ABC):
         pass
 
     @abstractmethod
+    def delete_graph(self, id: str):
+        """
+        Deletes a graph and all its nodes, edges, and metadata from the database.
+
+        :param id: Unique identifier of the graph to delete
+        :type id: str
+        """
+        pass
+
+    @abstractmethod
     def close(self) -> None:
         """
         Close the repository (e.g. database connection).

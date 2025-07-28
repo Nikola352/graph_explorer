@@ -4,6 +4,8 @@ from api.components.data_source import DataSourcePlugin
 from api.components.visualizer import VisualizerPlugin
 from core.commands.command import Command
 from core.models.workspace import Workspace
+from core.repositories.graph_repository.interfaces.base_graph_repository import \
+    BaseGraphRepository
 from core.use_cases.graph_context import GraphContext
 from core.use_cases.workspaces import WorkspaceService
 
@@ -75,8 +77,13 @@ class UpdateWorkspaceCommand(Command):
 
 
 class DeleteWorkspaceCommand(Command):
-    def __init__(self, workspace_service: WorkspaceService, args: Dict[str, Any]) -> None:
+    def __init__(self,
+                 workspace_service: WorkspaceService,
+                 graph_repository: BaseGraphRepository,
+                 args: Dict[str, Any]
+                 ) -> None:
         self.workspace_service = workspace_service
+        self.graph_repository = graph_repository
         self.workspace_id = args.get("workspace_id")
 
     def execute(self) -> Tuple[bool, str]:
@@ -85,6 +92,7 @@ class DeleteWorkspaceCommand(Command):
 
         try:
             self.workspace_service.remove_workspace(self.workspace_id)
+            self.graph_repository.delete_graph(self.workspace_id)
             return True, "Successfully removed the workspace"
         except KeyError:
             return False, f"Workspace not found: {self.workspace_id}"

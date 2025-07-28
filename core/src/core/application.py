@@ -149,7 +149,7 @@ class AppCommandProcessor(CommandProcessor):
                     id, refresh=refresh),
                 args=args,
             ),
-            CommandNames.DELETE_WORKSPACE: lambda args: DeleteWorkspaceCommand(app.workspace_service, args),
+            CommandNames.DELETE_WORKSPACE: lambda args: DeleteWorkspaceCommand(app.workspace_service, app.graph_repository, args),
             CommandNames.SELECT_VISUALIZER: lambda args: SelectVisualizerCommand(
                 graph_context=app.graph_context,
                 find_visualizer_by_id=lambda id: app.visualizer_map[id],
