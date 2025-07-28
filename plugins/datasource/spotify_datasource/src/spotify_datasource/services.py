@@ -20,6 +20,8 @@ def create_graph(auth_token: str, artist_name: str, max_neighbours: int, recursi
 
 def process_artists(auth_token: str, artist: Artist, max_neighbours: int,
                     recursion_depth: int, processed_artists: set, graph: Graph):
+    """Searching for the related artists with DFS search going for recursion depth iterations
+        and adding them to the graph"""
     if recursion_depth == 0:
         return
     if artist.id in processed_artists:
@@ -45,6 +47,7 @@ def process_artists(auth_token: str, artist: Artist, max_neighbours: int,
 
 
 def find_artist_by_name(artist_name: str, auth_token: str) -> Tuple[Artist, str]:
+    """Fetching the artist by name and returning it with the auth token if new was generated"""
     try:
         response = requests.get("https://api.spotify.com/v1/search",
                                 headers={
@@ -55,8 +58,6 @@ def find_artist_by_name(artist_name: str, auth_token: str) -> Tuple[Artist, str]
 
     if not response.ok:
         if response.status_code == 401 or response.status_code == 400:
-            # send request to get new token
-            # TODO try to save it to workspace
             new_auth_token = get_auth_token()
             print(new_auth_token)
             return find_artist_by_name(artist_name, new_auth_token)
@@ -78,8 +79,7 @@ def find_artist_by_name(artist_name: str, auth_token: str) -> Tuple[Artist, str]
 
 
 def find_related_artists(artist: Artist, auth_token: str, max_neighbours: int) -> List[Artist]:
-    # if len(artist.genres) <= 0:
-    #     return []
+    """Find related artists for the given artist's genre if there is none set hip hop as a default"""
     try:
         response = requests.get(url="https://api.spotify.com/v1/search",
                                 headers={
