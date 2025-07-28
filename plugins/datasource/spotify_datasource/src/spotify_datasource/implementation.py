@@ -1,5 +1,3 @@
-# TODO: Remove this
-
 from api.models.node import Node
 from api.models.graph import Graph
 from api.models.edge import Edge

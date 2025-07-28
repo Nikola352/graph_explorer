@@ -2,6 +2,7 @@ from typing import Dict, List, Set
 
 import psycopg2
 
+from api.models.data import DataDict
 from api.models.edge import Edge
 from api.models.graph import Graph
 from api.models.node import Node
@@ -82,7 +83,7 @@ def create_graph(host: str, port: int, database: str, username: str, password: s
             target_node = nodes.get(target_node_id)
 
             if src_node and target_node:
-                edge_data = {
+                edge_data: DataDict = {
                     "relation": f"{src_table}.{fk_column} -> {target_table}.{target_column}"
                 }
                 edge = Edge(data=edge_data, src=src_node, target=target_node)
