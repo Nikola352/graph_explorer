@@ -19,7 +19,7 @@ class SelectWorkspaceCommand(Command):
 
 
 class CreateWorkspaceCommand(Command):
-    def __init__(self, workspace_service: WorkspaceService, select_workspace: Callable[[str], Workspace], args: Dict[str, Any]) -> None:
+    def __init__(self, workspace_service: WorkspaceService, select_workspace: Callable[[str, bool], Workspace], args: Dict[str, Any]) -> None:
         self.workspace_service = workspace_service
         self.select_workspace = select_workspace
         self.name = args.get("name")
@@ -35,7 +35,7 @@ class CreateWorkspaceCommand(Command):
         try:
             workspace = self.workspace_service.create_workspace(
                 self.name, self.data_source_id, self.config)
-            self.select_workspace(workspace.id)
+            self.select_workspace(workspace.id, True)
             return True, f"Created {workspace.name}"
         except Exception as e:
             return False, f"Failed to create workspace: {str(e)}"
@@ -44,15 +44,11 @@ class CreateWorkspaceCommand(Command):
 class UpdateWorkspaceCommand(Command):
     def __init__(self,
                  workspace_service: WorkspaceService,
-                 graph_context: GraphContext,
-                 get_current_workspace_id: Callable[[], str],
-                 find_data_source_by_id: Callable[[str], DataSourcePlugin],
+                 select_workspace: Callable[[str, bool], Workspace],
                  args: Dict[str, Any],
                  ):
         self.workspace_service = workspace_service
-        self.graph_context = graph_context
-        self.get_current_workspace_id = get_current_workspace_id
-        self.find_data_source_by_id = find_data_source_by_id
+        self.select_workspace = select_workspace
         self.workspace_id = args.get("workspace_id")
         self.name = args.get("name")
         self.data_source_id = args.get("data_source_id")
@@ -69,12 +65,7 @@ class UpdateWorkspaceCommand(Command):
         try:
             workspace = self.workspace_service.update(
                 str(self.workspace_id), self.name, self.data_source_id, self.config)
-
-            # Update current workspace context if it's the active one
-            if self.get_current_workspace_id() == workspace.id:
-                self.graph_context.set_data_source_config(self.config)
-                data_source = self.find_data_source_by_id(self.data_source_id)
-                self.graph_context.select_data_source(data_source)
+            self.select_workspace(workspace.id, True)
 
             return True, f"Updated {workspace.name}"
         except KeyError:
