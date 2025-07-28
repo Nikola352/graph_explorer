@@ -97,7 +97,7 @@ class Application(object):
             **self.graph_context.get_context()
         }
 
-    def select_workspace(self, workspace_id: str) -> Workspace:
+    def select_workspace(self, workspace_id: str, refresh: bool = False) -> Workspace:
         """
         Changes the active workspace to the specified workspace.
 
@@ -125,6 +125,9 @@ class Application(object):
             self.workspace_service,
             self.graph_repository,
         )
+
+        if refresh:
+            self.graph_context.refresh_data_source()
 
         return workspace
 
@@ -165,14 +168,13 @@ class AppCommandProcessor(CommandProcessor):
             CommandNames.SELECT_WORKSPACE: lambda args: SelectWorkspaceCommand(lambda id: app.select_workspace(id), args),
             CommandNames.CREATE_WORKSPACE: lambda args: CreateWorkspaceCommand(
                 app.workspace_service,
-                lambda id: app.select_workspace(id),
+                lambda id, refresh: app.select_workspace(id, refresh=refresh),
                 args
             ),
             CommandNames.UPDATE_WORKSPACE: lambda args: UpdateWorkspaceCommand(
                 workspace_service=app.workspace_service,
-                graph_context=app.graph_context,
-                get_current_workspace_id=lambda: app.current_workspace_id,
-                find_data_source_by_id=lambda id: app.data_source_map[id],
+                select_workspace=lambda id, refresh: app.select_workspace(
+                    id, refresh=refresh),
                 args=args,
             ),
             CommandNames.DELETE_WORKSPACE: lambda args: DeleteWorkspaceCommand(app.workspace_service, args),
