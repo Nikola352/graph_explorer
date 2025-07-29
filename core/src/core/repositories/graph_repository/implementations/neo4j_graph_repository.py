@@ -106,6 +106,16 @@ class Neo4JGraphRepository(BaseGraphRepository):
             result = session.run(query, graph_id=id, **params)
             return self._parse_graph(result, directed, root_id)
 
+    def delete_graph(self, id: str):
+        """
+        Deletes a graph and all its nodes, edges, and metadata from the database.
+
+        :param id: Unique identifier of the graph to delete
+        :type id: str
+        """
+        with self.driver.session() as session:
+            session.execute_write(self._delete_graph, id)
+
     @staticmethod
     def _save_graph(tx: ManagedTransaction, graph_id: str, graph: Graph):
         # 1. Save graph metadata
@@ -192,6 +202,26 @@ class Neo4JGraphRepository(BaseGraphRepository):
                 edges.add(edge)
 
         return Graph(nodes=set(node_map.values()), edges=edges, directed=directed, root_id=root_id)
+
+    @staticmethod
+    def _delete_graph(tx: ManagedTransaction, graph_id: str):
+        # Delete all relationships between nodes in the graph
+        tx.run("""
+            MATCH (:Node {graph_id: $graph_id})-[r]-(:Node {graph_id: $graph_id})
+            DELETE r
+        """, graph_id=graph_id)
+
+        # Delete all nodes in the graph
+        tx.run("""
+            MATCH (n:Node {graph_id: $graph_id})
+            DELETE n
+        """, graph_id=graph_id)
+
+        # Delete graph metadata
+        tx.run("""
+            MATCH (meta:GraphMeta {graph_id: $graph_id})
+            DELETE meta
+        """, graph_id=graph_id)
 
     def _build_where_clause(self, filters: List[Filter], search_term: Optional[str], node_name: str) -> Tuple[str, Dict]:
         filter_clause, params = self._build_filter_clause(filters, node_name)
