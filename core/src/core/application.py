@@ -13,9 +13,10 @@ from core.repositories.graph_repository.implementations.neo4j_graph_repository i
     Neo4JGraphRepository
 from core.repositories.workspace_repository.implementations.tiny_db_workspace_repository import \
     WorkspaceRepository
-from core.use_cases.plugin_recognition import load_plugins
-from core.use_cases.workspaces import WorkspaceService
 from core.use_cases.graph_context_factory import GraphContextFactory
+from core.use_cases.plugin_recognition import load_plugins
+from core.use_cases.workspace_context import WorkspaceContext
+from core.use_cases.workspaces import WorkspaceService
 
 
 class Application(object):
@@ -42,8 +43,7 @@ class Application(object):
         # Initializer workspace storage
         workspace_repo = WorkspaceRepository(app_config.workspace_db_path)
         self.workspace_service = WorkspaceService(workspace_repo)
-        workspace = self.workspace_service.get_workspaces()[0]
-        self.current_workspace_id: str = workspace.id
+
 
         # Initializer graph storage
         self.graph_repository = Neo4JGraphRepository(
@@ -59,8 +59,14 @@ class Application(object):
             self.visualizer_plugins
         )
 
-        self.graph_context = self.graph_context_factory.make(workspace)
+        self.workspace_context = WorkspaceContext(
+            self.workspace_service, self.graph_context_factory)
+
         self.command_processor = AppCommandProcessor(self)
+
+    @property
+    def graph_context(self) -> GraphContext:
+        return self.workspace_context.graph_context
 
     def get_context(self) -> Dict[str, Any]:
         """
@@ -75,33 +81,12 @@ class Application(object):
         :rtype: dict[str, Any]
         """
         return {
-            "current_workspace_id": self.current_workspace_id,
             "workspaces": self.workspace_service.get_workspaces(),
             "operators": FilterOperator.choices(),
             "data_sources": self.data_source_plugins,
             "visualizers": self.visualizer_plugins,
-            **self.graph_context.get_context()
+            **self.workspace_context.get_context()
         }
-
-    def select_workspace(self, workspace_id: str, refresh: bool = False) -> Workspace:
-        """
-        Changes the active workspace to the specified workspace.
-
-        :param workspace_id: The ID of the workspace to activate.
-        :type workspace_id: str
-        :raises KeyError: If the specified workspace doesn't exist.
-        """
-        workspace = self.workspace_service.get_workspace(workspace_id)
-        if workspace is None:
-            raise KeyError("The workspace does not exist")
-        self.current_workspace_id = workspace_id
-
-        self.graph_context = self.graph_context_factory.make(workspace)
-
-        if refresh:
-            self.graph_context.refresh_data_source()
-
-        return workspace
 
     def get_data_source_config_params(self, data_source_id: str) -> List[DataSourceConfigParam]:
         """
@@ -137,22 +122,26 @@ class AppCommandProcessor(CommandProcessor):
             CommandNames.FILTER: lambda args: FilterCommand(app.graph_context, args),
             CommandNames.CLEAR_SEARCH: lambda _: ClearSearchCommand(app.graph_context),
             CommandNames.REMOVE_FILTER: lambda args: RemoveFilterCommand(app.graph_context, args),
-            CommandNames.SELECT_WORKSPACE: lambda args: SelectWorkspaceCommand(lambda id: app.select_workspace(id), args),
+            CommandNames.SELECT_WORKSPACE: lambda args: SelectWorkspaceCommand(app.workspace_context, args),
             CommandNames.CREATE_WORKSPACE: lambda args: CreateWorkspaceCommand(
                 app.workspace_service,
-                lambda id, refresh: app.select_workspace(id, refresh=refresh),
+                app.workspace_context,
                 args
             ),
             CommandNames.UPDATE_WORKSPACE: lambda args: UpdateWorkspaceCommand(
                 workspace_service=app.workspace_service,
-                select_workspace=lambda id, refresh: app.select_workspace(
-                    id, refresh=refresh),
+                workspace_context=app.workspace_context,
                 args=args,
             ),
-            CommandNames.DELETE_WORKSPACE: lambda args: DeleteWorkspaceCommand(app.workspace_service, app.graph_repository, args),
+            CommandNames.DELETE_WORKSPACE: lambda args: DeleteWorkspaceCommand(
+                workspace_service=app.workspace_service,
+                workspace_context=app.workspace_context,
+                graph_repository=app.graph_repository,
+                args=args
+            ),
             CommandNames.SELECT_VISUALIZER: lambda args: SelectVisualizerCommand(
                 graph_context=app.graph_context,
-                find_visualizer_by_id=lambda id: app.visualizer_map[id],
+                find_visualizer_by_id=lambda id: app.graph_context_factory.visualizer_map[id],
                 args=args,
             ),
             CommandNames.REFRESH_DATA_SOURCE: lambda args: RefreshDataSourceCommand(app.graph_context),

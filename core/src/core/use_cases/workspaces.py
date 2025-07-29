@@ -1,13 +1,3 @@
-"""
-This module provides functions for workspace management.
-
-It uses workspace repository as a persistence layer to provide CRUD operations.
-The module handles all workspace-related operations including:
-- Workspace creation and deletion
-- Workspace retrieval
-- Workspace property updates (name, filters, data sources, visualizers)
-"""
-
 from typing import List
 
 from core.models.workspace import Workspace
@@ -18,6 +8,12 @@ from core.repositories.workspace_repository.implementations.tiny_db_workspace_re
 class WorkspaceService(object):
     """
     Provides functions for workspace management.
+
+    Uses workspace repository as a persistence layer to provide CRUD operations.
+    Handles all workspace-related operations including:
+    - Workspace creation and deletion
+    - Workspace retrieval
+    - Workspace property updates (name, filters, data sources, visualizers)
     """
 
     def __init__(self, repo: BaseWorkspaceRepository):

@@ -399,6 +399,8 @@ function deleteWorkspace(workspace_id) {
         workspaceElement.remove();
       }
 
+      location.reload();
+
       //console.log("Successfully deleted the workspace.");
     })
     .catch((error) => {

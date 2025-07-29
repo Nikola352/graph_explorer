@@ -1,29 +1,28 @@
 from typing import Any, Callable, Dict, Tuple
 
-from api.components.data_source import DataSourcePlugin
 from api.components.visualizer import VisualizerPlugin
 from core.commands.command import Command
-from core.models.workspace import Workspace
 from core.repositories.graph_repository.interfaces.base_graph_repository import \
     BaseGraphRepository
 from core.use_cases.graph_context import GraphContext
+from core.use_cases.workspace_context import WorkspaceContext
 from core.use_cases.workspaces import WorkspaceService
 
 
 class SelectWorkspaceCommand(Command):
-    def __init__(self, select_workspace: Callable[[str], Workspace], args: Dict[str, Any]) -> None:
-        self.select_workspace = select_workspace
+    def __init__(self, workspace_context: WorkspaceContext, args: Dict[str, Any]):
+        self.workspace_context = workspace_context
         self.workspace_id = str(args["workspace_id"])
 
     def execute(self) -> Tuple[bool, str]:
-        workspace = self.select_workspace(self.workspace_id)
+        workspace = self.workspace_context.select_workspace(self.workspace_id)
         return True, f"Selected workspace {workspace.name}"
 
 
 class CreateWorkspaceCommand(Command):
-    def __init__(self, workspace_service: WorkspaceService, select_workspace: Callable[[str, bool], Workspace], args: Dict[str, Any]) -> None:
+    def __init__(self, workspace_service: WorkspaceService, workspace_context: WorkspaceContext, args: Dict[str, Any]):
         self.workspace_service = workspace_service
-        self.select_workspace = select_workspace
+        self.workspace_context = workspace_context
         self.name = args.get("name")
         self.data_source_id = args.get("data_source_id")
         self.config = args.get("config", {})
@@ -37,7 +36,7 @@ class CreateWorkspaceCommand(Command):
         try:
             workspace = self.workspace_service.create_workspace(
                 self.name, self.data_source_id, self.config)
-            self.select_workspace(workspace.id, True)
+            self.workspace_context.select_workspace(workspace.id, True)
             return True, f"Created {workspace.name}"
         except Exception as e:
             return False, f"Failed to create workspace: {str(e)}"
@@ -46,11 +45,11 @@ class CreateWorkspaceCommand(Command):
 class UpdateWorkspaceCommand(Command):
     def __init__(self,
                  workspace_service: WorkspaceService,
-                 select_workspace: Callable[[str, bool], Workspace],
+                 workspace_context: WorkspaceContext,
                  args: Dict[str, Any],
                  ):
         self.workspace_service = workspace_service
-        self.select_workspace = select_workspace
+        self.workspace_context = workspace_context
         self.workspace_id = args.get("workspace_id")
         self.name = args.get("name")
         self.data_source_id = args.get("data_source_id")
@@ -67,7 +66,7 @@ class UpdateWorkspaceCommand(Command):
         try:
             workspace = self.workspace_service.update(
                 str(self.workspace_id), self.name, self.data_source_id, self.config)
-            self.select_workspace(workspace.id, True)
+            self.workspace_context.select_workspace(workspace.id, True)
 
             return True, f"Updated {workspace.name}"
         except KeyError:
@@ -80,19 +79,26 @@ class DeleteWorkspaceCommand(Command):
     def __init__(self,
                  workspace_service: WorkspaceService,
                  graph_repository: BaseGraphRepository,
+                 workspace_context: WorkspaceContext,
                  args: Dict[str, Any]
                  ) -> None:
         self.workspace_service = workspace_service
         self.graph_repository = graph_repository
+        self.workspace_context = workspace_context
         self.workspace_id = args.get("workspace_id")
 
     def execute(self) -> Tuple[bool, str]:
         if not self.workspace_id:
             return False, "Missing 'workspace_id'"
 
+        if self.workspace_context.is_last():
+            return False, "There must be at least one workspace"
+
         try:
             self.workspace_service.remove_workspace(self.workspace_id)
             self.graph_repository.delete_graph(self.workspace_id)
+            if self.workspace_context.current_workspace_id == self.workspace_id:
+                self.workspace_context.select_first_workspace()
             return True, "Successfully removed the workspace"
         except KeyError:
             return False, f"Workspace not found: {self.workspace_id}"
