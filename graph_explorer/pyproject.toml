@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "graph_explorer"
+version = "0.1"
+dependencies = [
+    "core==0.1",
+    "Django>=5.2"
+]
+requires-python = ">= 3.10"

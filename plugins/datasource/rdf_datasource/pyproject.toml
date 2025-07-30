@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rdf_datasource"
+version = "0.1"
+dependencies = [
+    "api==0.1",
+    "rdflib>=7.0.0"
+]
+requires-python = ">= 3.10"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.entry-points."graph_explorer.datasources"]
+rdf_datasource = "rdf_datasource.implementation:RdfDataSource"

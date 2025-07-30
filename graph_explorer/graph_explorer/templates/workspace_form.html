@@ -1,0 +1,53 @@
+<div id="workspace-form-modal" class="modal is-active">
+  <div class="modal-background" onclick="closeWorkspaceForm()"></div>
+
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title" id="workspace-form-title">Create/Edit Workspace</p>
+      <button class="delete" aria-label="close" onclick="closeWorkspaceForm()"></button>
+    </header>
+
+    
+    <form id="workspace-form" action="{% url 'save-workspace' %}">
+    {% csrf_token %}
+
+      <section class="modal-card-body">
+        <div class="field">
+          <label class="label">Workspace Name</label>
+          <div class="control">
+            <input class="input" type="text" name="name" id="workspace-name-input" placeholder="Enter workspace name" required />
+          </div>
+        </div>
+        
+        <div class="field">
+          <label class="label">Data Source</label>
+          <div class="control">
+            <div class="select">
+              <select name="data_source" id="workspace-datasource-select" required>
+                <option value="" disabled selected>Select data source</option>
+                {% for data_source in data_sources %}
+                <option value="{{ data_source.identifier }}">{{ data_source.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic configuration parameters container -->
+        <div id="datasource-config-container" style="display: none;">
+          <hr class="my-4">
+          <h4 class="title is-5">Data Source Configuration</h4>
+          <div id="datasource-config-fields"></div>
+        </div>
+        
+        <input type="hidden" id="workspace-id-input" name="workspace_id" value="" />
+      </section>
+
+      <footer class="modal-card-foot">
+        <button type="submit" class="button is-success">Save</button>
+        <button type="button" class="button" onclick="closeWorkspaceForm()">Cancel</button>
+      </footer>
+    </form>
+    
+  </div>
+</div>

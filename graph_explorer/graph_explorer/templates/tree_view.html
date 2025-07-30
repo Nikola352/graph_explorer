@@ -1,0 +1,917 @@
+<style>
+  #tree-container {
+    height: 35rem; 
+    width: 100%; 
+    overflow: auto;
+    overflow-x: auto;
+    overflow-y: auto;
+    position: relative;
+    box-sizing: border-box;
+    min-height: 0; 
+    min-width: 0; 
+  }
+  
+  .tree-node {
+    cursor: pointer;
+    user-select: none;
+    font-size: 12px;
+    line-height: 20px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    position: relative;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    min-height: fit-content; 
+    width: fit-content; 
+    min-width: 200px; 
+  }
+  
+  .tree-node:hover {
+    background: #f5f5f5;
+  }
+  
+  .tree-node.selected {
+    background: #e3f2fd;
+    color: #1976d2;
+  }
+  
+  .tree-toggle {
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+    color: #666;
+    background: none;
+    border: none;
+    padding: 0;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+  }
+  
+  .tree-toggle:hover {
+    background: rgba(0,0,0,0.1);
+    color: #333;
+  }
+  
+  .tree-toggle:before {
+    content: '▶';
+  }
+  
+  .tree-toggle.expanded:before {
+    content: '▼';
+  }
+  
+  .tree-toggle.leaf {
+    opacity: 0;
+    cursor: default;
+  }
+  
+  .tree-toggle.leaf:hover {
+    background: none;
+  }
+  
+  .tree-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    display: inline-block;
+    text-align: center;
+    font-size: 10px;
+    line-height: 16px;
+  }
+    
+  .tree-children {
+    margin-left: 12px;
+    border-left: 1px dotted #ccc;
+    padding-left: 8px;
+    min-width: max-content; 
+  }
+  
+  .tree-children.collapsed {
+    display: none;
+  }
+  
+  .tree-label {
+    flex: 1;
+    overflow: visible; 
+    text-overflow: ellipsis;
+    word-wrap: break-word; 
+    max-width: none; 
+    min-height: fit-content; 
+  }
+
+  .component-header {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .component-header:hover {
+    background: linear-gradient(135deg, #e8f4fd 0%, #b8d4f0 100%);
+    border-color: #1976d2;
+  }
+  
+  .component-header.collapsed {
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  
+  .component-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .component-stats {
+    font-size: 10px;
+    color: #666;
+    background: rgba(255,255,255,0.7);
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+  
+  .component-toggle {
+    font-size: 12px;
+    color: #666;
+    transition: transform 0.2s;
+  }
+  
+  .component-toggle.collapsed {
+    transform: rotate(-90deg);
+  }
+  
+  .component-tree {
+    margin-left: 8px;
+    border-left: 1px solid #e3f2fd;
+    padding-left: 8px;
+    margin-bottom: 12px;
+    min-width: max-content; 
+    width: fit-content; 
+  }
+  
+  .component-tree.collapsed {
+    display: none;
+  }
+  
+  .node-info-btn {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 6px;
+    vertical-align: middle;
+    line-height: 14px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  
+  .node-info-btn:hover {
+    background: #1565c0;
+    transform: scale(1.1);
+  }
+  
+  .node-info-btn:active {
+    transform: scale(0.95);
+  }
+  
+  #node-dropdown {
+    position: absolute;
+    background: white;
+    border: 2px solid #1976d2;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 12px;
+    min-width: 200px;
+    max-width: 300px;
+    z-index: 1000;
+    display: none;
+    font-size: 10px;
+  }
+  
+  #node-dropdown .dropdown-header {
+    font-weight: bold;
+    color: #1976d2;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    font-size: 10px;
+  }
+  
+  #node-dropdown .dropdown-row {
+    margin: 4px 0;
+    word-wrap: break-word;
+  }
+  
+  #node-dropdown .dropdown-key {
+    color: #666;
+    font-weight: bold;
+  }
+  
+  #node-dropdown .dropdown-value {
+    color: #333;
+    margin-left: 8px;
+  }
+  
+  #node-dropdown .close-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+  }
+  
+  #node-dropdown .close-btn:hover {
+    color: #666;
+  }
+</style>
+
+
+  <div id="tree-container"></div>
+  <div id="node-dropdown">
+    <button class="close-btn" onclick="hideNodeDropdown()">×</button>
+    <div class="dropdown-header" id="dropdown-title">Node Details</div>
+    <div id="dropdown-content"></div>
+  </div>
+
+
+<script>
+  let isTreeGraphLoaded = false;
+  let observerActive = false;
+  let debounceTimer = null;
+  let forestData = null;
+  let expandedNodes = new Set();
+  let cyclicNodeCopies = new Map(); 
+  
+  window.treeNodeData = new Map();
+  
+  function setupTreeViewObserver() {
+    if (observerActive) return; 
+    
+    const mainViewContainer = document.getElementById('main-view-graph');
+    if (!mainViewContainer) {
+      setTimeout(setupTreeViewObserver, 500);
+      return;
+    }
+    
+    observerActive = true;
+    
+    const observer = new MutationObserver((mutations) => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach(node => {
+            if (node.tagName === 'svg' || 
+                (node.querySelector && node.querySelector('svg')) ||
+                (node.classList && node.classList.contains('node'))) {
+              debounceTimer = setTimeout(renderNewTreeView, 1000);
+            }
+          });
+        }
+      });
+    });
+    
+    observer.observe(mainViewContainer, {
+      childList: true,
+      subtree: true,
+      attributes: false 
+    });
+    
+    setTimeout(() => {
+      if (!isTreeGraphLoaded) {
+        renderNewTreeView();
+      }
+    }, 2000);
+  }
+  
+  const renderNewTreeView = () => {
+    if (isTreeGraphLoaded) {
+      return;
+    }
+    
+    isTreeGraphLoaded = true;
+    
+    const mainViewContainer = document.getElementById('main-view-graph');
+    if (!mainViewContainer) {
+      isTreeGraphLoaded = false;
+      return;
+    }
+    
+    const mainViewSvg = mainViewContainer.querySelector('svg');
+    if (!mainViewSvg) {
+      isTreeGraphLoaded = false;
+      return;
+    }
+    
+    const d3Svg = d3.select(mainViewSvg);
+    const nodeElements = d3Svg.selectAll("g.node[enabled='true']").nodes();
+    const edgeElements = d3Svg.selectAll("path.link[enabled='true']").nodes();
+
+    const nodes = nodeElements.map((elem, index) => ({
+      id: elem.id,
+      data: elem.__data__.data || {},
+      element: elem
+    }));
+
+    const edges = edgeElements.map((elem, index) => {
+      const data = elem.__data__;
+      return {
+        source: data?.source?.id || elem.getAttribute('data-source') || data?.source,
+        target: data?.target?.id || elem.getAttribute('data-target') || data?.target,
+        data: data || {}
+      };
+    });
+
+    forestData = buildTreeFromGraph(nodes, edges);
+    if (forestData) {
+      renderForest(forestData);
+      setTimeout(() => {
+        isTreeGraphLoaded = false; 
+      }, 5000); 
+    } else {
+      isTreeGraphLoaded = false;
+    }
+  }
+
+  function buildNodeStructure(nodeId, componentNodes, nodeMap, childrenMap, parentMap) {
+    const nodeData = nodeMap.get(nodeId);
+    const children = (childrenMap.get(nodeId) || []).filter(childId => componentNodes.has(childId));
+    const parents = (parentMap.get(nodeId) || []).filter(parentId => componentNodes.has(parentId));
+    const hasMultipleParents = parents.length > 1;
+    
+    const isRoot = parents.length === 0;
+    const shouldExpand = expandedNodes.has(nodeId);
+    const isLeaf = children.length === 0;
+      
+    const nodeStructure = {
+        id: nodeId,
+        fullData: nodeData,
+        children: children,
+        parents: parents,
+        hasMultipleParents: hasMultipleParents,
+        isLeaf: isLeaf,
+        expanded: shouldExpand,
+        isRoot: isRoot
+      };
+      
+      return nodeStructure;
+  }
+
+  function buildTreeFromGraph(nodes, edges) {
+    window.treeNodeData.clear();
+    cyclicNodeCopies.clear(); 
+    
+    const nodeMap = new Map();
+    const parentMap = new Map(); 
+    const childrenMap = new Map(); 
+    
+    nodes.forEach(node => {
+      nodeMap.set(node.id, node.data);
+      parentMap.set(node.id, []);
+      childrenMap.set(node.id, []);
+      
+      window.treeNodeData.set(node.id, node.data);
+    });
+    
+    edges.forEach(edge => {
+      if (edge.source && edge.target && nodeMap.has(edge.source) && nodeMap.has(edge.target)) {
+        parentMap.get(edge.target).push(edge.source);
+        childrenMap.get(edge.source).push(edge.target);
+      }
+    });
+    
+    const visited = new Set();
+    const components = [];
+    
+    function dfs(nodeId, component) {
+      if (visited.has(nodeId)) return;
+      visited.add(nodeId);
+      component.add(nodeId);
+      
+      const children = childrenMap.get(nodeId) || [];
+      const parents = parentMap.get(nodeId) || [];
+      
+      [...children, ...parents].forEach(connectedId => {
+        if (nodeMap.has(connectedId)) {
+          dfs(connectedId, component);
+        }
+      });
+    }
+    
+    nodes.forEach(node => {
+      if (!visited.has(node.id)) {
+        const component = new Set();
+        dfs(node.id, component);
+        components.push(component);
+      }
+    });
+
+    const componentRoots = [];
+    const componentNodes = [];
+
+    const componentStructure = components.map(component => {
+      for (const node of component) {
+        const parents = parentMap.get(node) || [];
+        const nodeStructure = buildNodeStructure(node, component, nodeMap, childrenMap, parentMap);
+        if (parents.filter(parentId => component.has(parentId)).length === 0) {
+          componentRoots.push(nodeStructure);
+        }
+        componentNodes.push(nodeStructure);
+      }
+    });
+
+    const forest = {
+        name: `Node Hierarchy`,
+        roots: componentRoots,
+        nodes: componentNodes,
+        nodeMap: new Map(componentNodes.map(node => [node.id, node])),
+        size: componentNodes.length
+      };
+    
+  
+    return forest;
+  }
+
+  
+  
+  const collapsedComponents = new Set();
+  
+  function renderForest(forest) {
+    const container = document.getElementById('tree-container');
+    container.innerHTML = '';
+    
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'component-header';
+    headerDiv.setAttribute('data-component-id', forest.id);
+    
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'component-info';
+      
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = forest.name;
+      
+    const statsSpan = document.createElement('span');
+    statsSpan.className = 'component-stats';
+    statsSpan.textContent = `${forest.size} nodes, ${forest.roots.length} roots`;
+      
+    infoDiv.appendChild(nameSpan);
+    infoDiv.appendChild(statsSpan);
+      
+    const toggleSpan = document.createElement('span');
+    toggleSpan.className = 'component-toggle';
+    toggleSpan.textContent = '▼';
+    if (collapsedComponents.has(forest.id)) {
+      toggleSpan.classList.add('collapsed');
+    }
+      
+    headerDiv.appendChild(infoDiv);
+    headerDiv.appendChild(toggleSpan);
+      
+    headerDiv.onclick = () => toggleComponent(forest.id);
+      
+    container.appendChild(headerDiv);
+      
+    const treeDiv = document.createElement('div');
+    treeDiv.className = 'component-tree';
+    treeDiv.setAttribute('data-component-tree', forest.id);
+      
+    if (collapsedComponents.has(forest.id)) {
+      treeDiv.classList.add('collapsed');
+    }
+      
+    renderComponentTree(forest, treeDiv);
+      
+    container.appendChild(treeDiv);
+    
+  }
+  
+  function renderComponentTree(component, containerElement) {
+    const hierarchyMap = component.nodeMap;
+    
+    const renderedInstances = new Map();
+    
+    function renderNode(nodeData, depth = 0, pathFromRoot = []) {
+      const isCyclic = pathFromRoot.includes(nodeData.id);
+      
+      let actualNodeData = nodeData;
+      let cyclicCopyKey = null;
+      
+      if (isCyclic) {
+        cyclicCopyKey = `${nodeData.id}_${pathFromRoot.join('-')}`;
+        
+        if (!cyclicNodeCopies.has(cyclicCopyKey)) {
+          const cyclicCopy = {
+            ...nodeData,
+            expanded: false, 
+            isCyclicCopy: true,
+            originalId: nodeData.id,
+            copyKey: cyclicCopyKey,
+            children: [...nodeData.children], 
+            parents: [...nodeData.parents], 
+            isLeaf: nodeData.children.length === 0 
+          };
+          cyclicNodeCopies.set(cyclicCopyKey, cyclicCopy);
+        }
+        
+        actualNodeData = cyclicNodeCopies.get(cyclicCopyKey);
+      }
+      
+      const nodeDiv = document.createElement('div');
+      nodeDiv.className = 'tree-node';
+      nodeDiv.setAttribute('data-node-id', actualNodeData.id);
+      if (cyclicCopyKey) {
+        nodeDiv.setAttribute('data-cyclic-copy-key', cyclicCopyKey);
+      }
+      nodeDiv.style.paddingLeft = (depth * 16) + 'px';
+      
+      if (actualNodeData.hasMultipleParents) {
+        nodeDiv.classList.add('has-multiple-parents');
+      }
+      
+      const toggle = document.createElement('button');
+      toggle.className = 'tree-toggle';
+      
+      const hasChildren = actualNodeData.children && actualNodeData.children.length > 0;
+      
+      if (!hasChildren) {
+        toggle.classList.add('leaf');
+      } else if (actualNodeData.expanded) {
+        toggle.classList.add('expanded');
+      }
+      
+      if (hasChildren) {
+        toggle.onclick = (e) => {
+          e.stopPropagation();
+          if (cyclicCopyKey) {
+            toggleCyclicCopy(cyclicCopyKey);
+          } else {
+            toggleNode(actualNodeData.id);
+          }
+        };
+      }
+      
+      const label = document.createElement('span');
+      label.className = 'tree-label';
+      let labelText = actualNodeData.id + ` [${actualNodeData.children.length}]`;
+      
+      if (isCyclic) {
+        labelText += ' 🔄';
+      }
+      
+      label.textContent = labelText;
+      
+      if (actualNodeData.hasMultipleParents) {
+        const indicator = document.createElement('span');
+        indicator.className = 'multiple-parent-indicator';
+        label.appendChild(indicator);
+      }
+      
+      const infoBtn = document.createElement('button');
+      infoBtn.className = 'node-info-btn';
+      infoBtn.textContent = '+';
+      infoBtn.onclick = (e) => {
+        e.stopPropagation();
+        const nodeIdForInfo = actualNodeData.isCyclicCopy ? actualNodeData.originalId : actualNodeData.id;
+        showNodeDropdown(nodeIdForInfo, e);
+      };
+      
+      nodeDiv.appendChild(toggle);
+      nodeDiv.appendChild(label);
+      nodeDiv.appendChild(infoBtn);
+
+      nodeDiv.onclick = (e) => {
+        if (e.target === toggle && hasChildren) {
+          e.stopPropagation();
+          if (cyclicCopyKey) {
+            toggleCyclicCopy(cyclicCopyKey);
+          } else {
+            toggleNode(actualNodeData.id);
+          }
+        } else if (e.target !== infoBtn) {
+          const nodeIdForSelect = actualNodeData.isCyclicCopy ? actualNodeData.originalId : actualNodeData.id;
+          selectNode(nodeIdForSelect);
+        }
+      };
+      
+      return nodeDiv;
+    }
+    
+    function renderChildren(nodeId, parentElement, depth, pathFromRoot = [], cyclicCopyKey = null) {
+      let nodeData;
+      
+      if (cyclicCopyKey) {
+        nodeData = cyclicNodeCopies.get(cyclicCopyKey);
+      } else {
+        nodeData = hierarchyMap.get(nodeId);
+      }
+      
+      if (!nodeData || !nodeData.expanded) return;
+      const currentPath = [...pathFromRoot, nodeId];
+      
+      const childrenContainer = document.createElement('div');
+      childrenContainer.className = 'tree-children';
+      
+      nodeData.children.forEach(childId => {
+      const childData = hierarchyMap.get(childId);
+      if (childData) {
+        const childElement = renderNode(childData, depth + 1, currentPath);
+        childrenContainer.appendChild(childElement);
+              
+        const isChildCyclic = currentPath.includes(childId);
+        let childCyclicKey = null;
+              
+        if (isChildCyclic) {
+          childCyclicKey = `${childId}_${currentPath.join('-')}`;
+        }
+              
+        renderChildren(childId, childrenContainer, depth + 1, currentPath, childCyclicKey);
+      }
+    });
+        
+    if (childrenContainer.children.length > 0) {
+      parentElement.appendChild(childrenContainer);
+    }
+  }
+    
+    renderedInstances.clear();
+    
+    component.roots.forEach(root => {
+      const rootData = hierarchyMap.get(root.id);
+      if (rootData) {
+        const rootElement = renderNode(rootData, 0, []);
+        containerElement.appendChild(rootElement);
+        if (rootData.expanded) {
+          renderChildren(root.id, containerElement, 0, [], null); 
+        }
+      }
+    });
+    
+  }
+  
+  function toggleComponent(componentId) {
+    if (collapsedComponents.has(componentId)) {
+      collapsedComponents.delete(componentId);
+    } else {
+      collapsedComponents.add(componentId);
+    }
+    
+    const header = document.querySelector(`[data-component-id="${componentId}"]`);
+    const tree = document.querySelector(`[data-component-tree="${componentId}"]`);
+    const toggle = header?.querySelector('.component-toggle');
+    
+    if (collapsedComponents.has(componentId)) {
+      header?.classList.add('collapsed');
+      tree?.classList.add('collapsed');
+      toggle?.classList.add('collapsed');
+    } else {
+      header?.classList.remove('collapsed');
+      tree?.classList.remove('collapsed');
+      toggle?.classList.remove('collapsed');
+    }
+  }
+  
+  function toggleNode(nodeId) {
+    if (expandedNodes.has(nodeId)) {
+      expandedNodes.delete(nodeId);
+    } else {
+      expandedNodes.add(nodeId);
+    }
+    
+    if (forestData) {
+      forestData.nodes.forEach(node => {
+          node.expanded = expandedNodes.has(node.id);
+        });
+        forestData.nodeMap.forEach(node => {
+          node.expanded = expandedNodes.has(node.id);
+        });
+      }
+      
+      renderForest(forestData);
+    }
+  
+  function toggleCyclicCopy(cyclicCopyKey) {
+    const cyclicCopy = cyclicNodeCopies.get(cyclicCopyKey);
+    if (cyclicCopy) {
+      cyclicCopy.expanded = !cyclicCopy.expanded;
+      renderForest(forestData);
+    }
+  }
+
+  function findNodeInForest(nodeId) {
+    if (!forestData || !forestData.nodeMap) return [];
+    
+    const nodeMap = forestData.nodeMap;
+    const startNode = nodeMap.get(nodeId);
+    
+    if (!startNode) return [];
+    
+    
+    function findPathBFS(targetNodeId) {
+      const queue = [[targetNodeId]];
+      const visited = new Set();
+      
+      while (queue.length > 0) {
+        const currentPath = queue.shift();
+        const currentNodeId = currentPath[currentPath.length - 1];
+        
+        if (visited.has(currentNodeId)) continue;
+        visited.add(currentNodeId);
+        
+        const currentNode = nodeMap.get(currentNodeId);
+        if (!currentNode) continue;
+        
+        if (currentNode.parents.length === 0) {
+          return currentPath.reverse();
+        }
+        
+        for (const parentId of currentNode.parents) {
+          if (!visited.has(parentId) && nodeMap.has(parentId)) {
+            queue.push([...currentPath, parentId]);
+          }
+        }
+      }
+      return [];
+    }
+    
+    function findPathToVisibleNode(targetNodeId) {
+      const queue = [[targetNodeId]];
+      const visited = new Set();
+      
+      while (queue.length > 0) {
+        const currentPath = queue.shift();
+        const currentNodeId = currentPath[currentPath.length - 1];
+        
+        if (visited.has(currentNodeId)) continue;
+        visited.add(currentNodeId);
+        
+        if (forestData.roots.includes(currentNodeId) || expandedNodes.has(currentNodeId)) {
+          return currentPath.reverse();
+        }
+        
+        const currentNode = nodeMap.get(currentNodeId);
+        if (!currentNode) continue;
+        
+        for (const parentId of currentNode.parents) {
+          if (!visited.has(parentId) && nodeMap.has(parentId)) {
+            queue.push([...currentPath, parentId]);
+          }
+        }
+      }
+      return [];
+    }
+    
+    let path = findPathBFS(nodeId);
+    
+    if (path.length === 0) {
+      path = findPathToVisibleNode(nodeId);
+    }
+    
+    if (path.length === 0 && forestData.roots.includes(nodeId)) {
+      path = [nodeId];
+    }
+    
+    return path;
+  }
+  
+  function selectNode(nodeId) {
+    document.querySelectorAll('.tree-node.selected').forEach(node => {
+      node.classList.remove('selected');
+    });
+
+  function tryScrollToNode(nodeId, attempts = 10) {
+    const targetElement = document.querySelector(`[data-node-id="${nodeId}"]`);
+    if (targetElement) {
+      targetElement.classList.add('selected');
+      targetElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center'
+      });
+    } else if (attempts > 0) {
+      setTimeout(() => tryScrollToNode(nodeId, attempts - 1), 100);
+    }
+  }
+    
+    const nodeElement = document.querySelector(`[data-node-id="${nodeId}"]`);
+    if (nodeElement) {
+      tryScrollToNode(nodeId)
+    } else {
+      const pathToNode = findNodeInForest(nodeId);
+      if (pathToNode.length > 0) {
+        const targetNodeId = pathToNode[pathToNode.length - 1];
+        for (let i = 0; i < pathToNode.length - 1; i++) {
+          expandedNodes.add(pathToNode[i]);
+        }
+        if (forestData) {
+          forestData.nodeMap.forEach(node => {
+            node.expanded = expandedNodes.has(node.id);
+          });
+          renderForest(forestData);
+          tryScrollToNode(targetNodeId);
+        }
+      }
+    }
+    
+    if (typeof dispatchNodeFocusEvent === 'function') {
+      dispatchNodeFocusEvent(nodeId);
+    }
+  }
+
+  window.showNodeDropdown = function(nodeId, event) {
+    event.stopPropagation();
+    
+    const dropdown = document.getElementById('node-dropdown');
+    const title = document.getElementById('dropdown-title');
+    const content = document.getElementById('dropdown-content');
+    
+    const nodeData = window.treeNodeData.get(nodeId) || {};
+    
+    let html = '<div class="dropdown-row"><span class="dropdown-key">ID:</span><span class="dropdown-value">' + nodeId + '</span></div>';
+    
+    if (Object.keys(nodeData).length > 0) {
+      Object.entries(nodeData).forEach(([key, value]) => {
+        if (key !== 'id' && value !== null && value !== undefined && value !== '') {
+          html += `<div class="dropdown-row">
+            <span class="dropdown-key">${key}:</span>
+            <span class="dropdown-value">${value}</span>
+          </div>`;
+        }
+      });
+    } else {
+      html += '<div class="dropdown-row"><span class="dropdown-value">No additional data available</span></div>';
+    }
+    
+    content.innerHTML = html;
+    
+    const button = event.target;
+    const treeContainer = document.getElementById('tree-container');
+    const containerRect = treeContainer.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+    
+    dropdown.style.display = 'block';
+    dropdown.style.left = Math.min(buttonRect.right - containerRect.left + 10, 50) + 'px';
+    dropdown.style.top = Math.max(buttonRect.top - containerRect.top - 10, 10) + 'px';
+    
+    setTimeout(() => {
+      document.addEventListener('click', outsideClickHandler, true);
+    }, 100);
+  };
+
+  function hideNodeDropdown() {
+    const dropdown = document.getElementById('node-dropdown');
+    dropdown.style.display = 'none';
+    document.removeEventListener('click', outsideClickHandler, true);
+  }
+
+  window.hideNodeDropdown = hideNodeDropdown;
+
+  function outsideClickHandler(event) {
+    const dropdown = document.getElementById('node-dropdown');
+    const treeContainer = document.getElementById('tree-container');
+    
+    if (!dropdown.contains(event.target) && !treeContainer.contains(event.target)) {
+      hideNodeDropdown();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setupTreeViewObserver();
+    });
+  } else {
+    setupTreeViewObserver();
+  }
+  
+  setTimeout(function() {
+    setupTreeViewObserver();
+  }, 2000);
+
+  document.addEventListener("node-focus", (e) => {
+    const nodeId = e.detail;
+    selectNode(nodeId);
+  });
+</script>
