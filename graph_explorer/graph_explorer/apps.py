@@ -3,6 +3,7 @@ from django.apps import AppConfig
 from core.application import Application
 from core.commands.command_processor import CommandProcessor
 from core.use_cases.graph_context import GraphContext
+from core.use_cases.workspace_context import WorkspaceContext
 from core.use_cases.workspaces import WorkspaceService
 
 
@@ -20,6 +21,10 @@ class GraphExplorerConfig(AppConfig):
     @property
     def workspace_service(self) -> WorkspaceService:
         return self.core_app.workspace_service
+
+    @property
+    def workspace_context(self) -> WorkspaceContext:
+        return self.core_app.workspace_context
 
     @property
     def command_processor(self) -> CommandProcessor:
