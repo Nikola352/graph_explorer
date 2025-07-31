@@ -246,7 +246,7 @@ class Neo4JGraphRepository(BaseGraphRepository):
                 clause = f"({node_name}.{f.field} {str(f.operator)} ${param_key})"
             elif f.type == 'datetime':
                 date_value = cast(datetime, f.value)
-                clause = f"({node_name}.{f.field} {str(f.operator)} date('{date_value.isoformat()}'))"
+                clause = f"({node_name}.{f.field} {str(f.operator)} localdatetime('{date_value.isoformat()}'))"
             else:  # str
                 params[param_key] = f.value
                 clause = f"({node_name}.{f.field} {str(f.operator)} ${param_key})"

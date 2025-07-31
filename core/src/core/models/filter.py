@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from core.models.filterOperator import FilterOperator
 
@@ -50,7 +50,7 @@ class Filter():
         return {
             'field': self.field,
             'operator': self.operator,
-            'value': self.value,
+            'value': self.value if not isinstance(self.value, date) else self.value.strftime("%Y-%m-%d"),
             'type': self.type
         }
 
