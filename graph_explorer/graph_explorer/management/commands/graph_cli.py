@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 from core.application import Application
 from core.commands.command_names import CommandNames
 from core.commands.command_processor import CommandProcessor
+from core.use_cases.workspace_context import WorkspaceContext
 
 
 def process_graph_command(subcommand, args_dict):
@@ -20,8 +21,8 @@ def process_graph_command(subcommand, args_dict):
     :return: Tuple of success and message
     :rtype: Tuple(bool, string)
     """
-    core_app: Application = apps.get_app_config(
-        'graph_explorer').core_app  # type: ignore
+    workspace_context: WorkspaceContext = apps.get_app_config(
+        'graph_explorer').workspace_context  # type: ignore
     
     processor: CommandProcessor = apps.get_app_config(
         'graph_explorer').command_processor  # type: ignore
@@ -29,11 +30,11 @@ def process_graph_command(subcommand, args_dict):
     workspace_id = args_dict.get('workspace')
     if workspace_id:
         try:
-            core_app.select_workspace(str(workspace_id))
+            workspace_context.select_workspace(str(workspace_id))
         except Exception as e:
             return False, f'Failed to select workspace {workspace_id}: {str(e)}'
     
-    graph_context = core_app.graph_context
+    graph_context = workspace_context.graph_context
     if not graph_context:
         return False, 'No graph context available. Please select a workspace first.'
 
