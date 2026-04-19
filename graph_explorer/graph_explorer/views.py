@@ -21,6 +21,8 @@ def index(request):
         'graph_explorer').core_app  # type: ignore
 
     context = core_app.get_context()
+    for w in context.get("workspaces", []):
+        w.data_source_config_json = json.dumps(w.data_source_config)
     current_workspace = next(
         (w for w in context["workspaces"] if w.id == context["current_workspace_id"]), None)
     if current_workspace:
