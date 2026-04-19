@@ -21,7 +21,7 @@
                 "id": {{ workspace.id }}, 
                 "name": "{{ workspace.name }}", 
                 "data_source": "{{ workspace.data_source_id }}", 
-                "data_source_config": {{ workspace.data_source_config }}
+                "data_source_config": {{ workspace.data_source_config_json|safe }}
               })'
             >
               <span class="material-symbols-outlined">settings</span></a>

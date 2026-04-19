@@ -13,6 +13,7 @@ pip install ./plugins/visualizer/block_visualizer
 pip install ./plugins/datasource/rdf_datasource
 pip install ./plugins/datasource/spotify_datasource
 pip install ./plugins/datasource/postgresql_datasource
+pip install ./plugins/datasource/text_datasource
 
 # Default environment setup
 cp ./core/src/core/.example.env ./core/src/core/.env
